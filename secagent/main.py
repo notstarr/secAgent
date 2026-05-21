@@ -1,0 +1,82 @@
+"""CLI entry point for secAgent."""
+
+from __future__ import annotations
+
+import click
+from rich.console import Console
+
+from secagent.core.config import AgentConfig
+
+console = Console()
+
+
+@click.group()
+@click.version_option(package_name="secagent")
+def cli() -> None:
+    """secAgent — Security Testing Agent powered by Claude Agent SDK."""
+
+
+@cli.command()
+@click.argument("target")
+@click.option("--scope", default="passive+active", help="Recon scope: passive | passive+active")
+@click.option("--model", default=None, help="Override the Claude model to use")
+@click.option("-v", "--verbose", is_flag=True, default=True)
+def recon(target: str, scope: str, model: str | None, verbose: bool) -> None:
+    """Perform reconnaissance on TARGET (hostname, IP, or URL)."""
+    from secagent.agents.recon_agent import ReconAgent
+
+    cfg = AgentConfig()
+    if model:
+        cfg.model = model
+    agent = ReconAgent(config=cfg)
+    result = agent.run(target=target, scope=scope, verbose=verbose)
+    if not verbose:
+        console.print(result)
+
+
+@cli.command()
+@click.argument("target_url")
+@click.option("--checks", default="all", help="Comma-separated check categories or 'all'")
+@click.option("--model", default=None, help="Override the Claude model to use")
+@click.option("-v", "--verbose", is_flag=True, default=True)
+def vuln(target_url: str, checks: str, model: str | None, verbose: bool) -> None:
+    """Run a vulnerability assessment against TARGET_URL."""
+    from secagent.agents.vuln_agent import VulnAgent
+
+    cfg = AgentConfig()
+    if model:
+        cfg.model = model
+    agent = VulnAgent(config=cfg)
+    result = agent.run(target_url=target_url, checks=checks, verbose=verbose)
+    if not verbose:
+        console.print(result)
+
+
+@cli.command()
+@click.argument("target")
+@click.option(
+    "--mode",
+    default="sequential",
+    type=click.Choice(["sequential", "managed"]),
+    help="Orchestration mode",
+)
+@click.option("--model", default=None, help="Override the Claude model to use")
+@click.option("-v", "--verbose", is_flag=True, default=True)
+def assess(target: str, mode: str, model: str | None, verbose: bool) -> None:
+    """Full security assessment of TARGET (recon + vuln + report)."""
+    from secagent.agents.orchestrator import OrchestratorAgent
+
+    cfg = AgentConfig()
+    if model:
+        cfg.model = model
+    orchestrator = OrchestratorAgent(config=cfg)
+
+    if mode == "managed":
+        result = orchestrator.run_managed(target=target, verbose=verbose)
+        console.print(result)
+    else:
+        orchestrator.run_sequential(target=target, verbose=verbose)
+
+
+if __name__ == "__main__":
+    cli()
