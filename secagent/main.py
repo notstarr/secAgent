@@ -132,5 +132,16 @@ def browser_server() -> None:
     mcp.run()
 
 
+@cli.command()
+@click.option("--host", default="0.0.0.0", help="Bind host")
+@click.option("--port", default=8888, help="Bind port")
+@click.option("--reload", is_flag=True, default=False, help="Enable auto-reload (dev)")
+def web(host: str, port: int, reload: bool) -> None:
+    """Start the secAgent Web UI (default: http://localhost:8888)."""
+    console.print(f"[bold blue]secAgent Web UI[/] → http://{host}:{port}")
+    from secagent.web.app import serve
+    serve(host=host, port=port, reload=reload)
+
+
 if __name__ == "__main__":
     cli()
