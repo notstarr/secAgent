@@ -18,13 +18,35 @@ tailwind.config = {
 /* nav-card: styles applied inline */
 .card{@apply bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6;}
 .badge-critical{@apply bg-red-100 text-red-700 border border-red-200;}
+.dark .badge-critical{background-color:rgba(153,27,27,0.25);color:#fca5a5;border-color:rgba(185,28,28,0.4);}
 .badge-high{@apply bg-orange-100 text-orange-700 border border-orange-200;}
+.dark .badge-high{background-color:rgba(154,52,18,0.25);color:#fdba74;border-color:rgba(194,65,12,0.4);}
 .badge-medium{@apply bg-yellow-100 text-yellow-700 border border-yellow-200;}
+.dark .badge-medium{background-color:rgba(133,77,14,0.25);color:#fde047;border-color:rgba(161,98,7,0.4);}
 .badge-low{@apply bg-blue-100 text-blue-700 border border-blue-200;}
+.dark .badge-low{background-color:rgba(29,78,216,0.25);color:#93c5fd;border-color:rgba(37,99,235,0.4);}
 .badge-info{@apply bg-slate-100 text-slate-600 border border-slate-200;}
+.dark .badge-info{background-color:rgba(51,65,85,0.5);color:#cbd5e1;border-color:rgba(71,85,105,0.5);}
 .badge-confirmed{@apply bg-green-100 text-green-700 border border-green-200;}
+.dark .badge-confirmed{background-color:rgba(20,83,45,0.25);color:#86efac;border-color:rgba(22,101,52,0.4);}
 .badge-false_positive{@apply bg-slate-100 text-slate-500 border border-slate-200;}
+.dark .badge-false_positive{background-color:rgba(51,65,85,0.5);color:#94a3b8;border-color:rgba(71,85,105,0.5);}
 .badge-pending{@apply bg-yellow-100 text-yellow-700 border border-yellow-200;}
+.dark .badge-pending{background-color:rgba(133,77,14,0.25);color:#fde047;border-color:rgba(161,98,7,0.4);}
+/* Status tag classes */
+.status-idle{@apply bg-slate-100 text-slate-500;}
+.dark .status-idle{background-color:rgba(51,65,85,0.4);color:#94a3b8;}
+.status-running{@apply bg-yellow-100 text-yellow-700;}
+.dark .status-running{background-color:rgba(133,77,14,0.3);color:#fde047;}
+.status-completed{@apply bg-green-100 text-green-700;}
+.dark .status-completed{background-color:rgba(20,83,45,0.3);color:#86efac;}
+.status-paused{@apply bg-orange-100 text-orange-600;}
+.dark .status-paused{background-color:rgba(154,52,18,0.3);color:#fdba74;}
+/* List item bubble card */
+.item-card{background:linear-gradient(135deg,#fff 0%,#f8fafc 100%);border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,0.05),0 1px 2px rgba(0,0,0,0.04);padding:14px 16px;transition:all 0.2s ease;}
+.item-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);transform:translateY(-1px);}
+.dark .item-card{background:linear-gradient(135deg,#1e293b 0%,#172032 100%);border:1px solid #334155;box-shadow:0 1px 6px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.2);}
+.dark .item-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.4),0 1px 3px rgba(0,0,0,0.25);}
 .input{@apply w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white dark:bg-slate-700 dark:text-white transition;}
 .btn{@apply px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer;}
 .btn-primary{@apply bg-primary-600 text-white hover:bg-primary-700 shadow-sm;}
@@ -107,7 +129,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- PROJECTS -->
         <div x-show="page==='projects'">
-          <div class="flex justify-end mb-6">
+          <div class="card mb-5 !p-4 flex items-center justify-between">
+            <div>
+              <div class="font-semibold text-sm">全部项目</div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="projects.length + ' 个项目'"></div>
+            </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('projectForm');editItem=null;projectForm={name:'',target:'',description:'',mode:'single',agent_id:''}">
               <i class="fa-solid fa-plus"></i> 新建项目
@@ -115,11 +141,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <template x-for="p in projects" :key="p.id">
-              <div class="card hover:shadow-md transition-all cursor-pointer" @click="openProject(p)">
+              <div class="item-card cursor-pointer" @click="openProject(p)">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="p.mode==='single'?'bg-primary-100':'bg-purple-100'">
-                      <i :class="p.mode==='single'?'fa-solid fa-robot text-primary-600':'fa-solid fa-sitemap text-purple-600'" class="text-sm"></i>
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="p.mode==='single'?'bg-primary-100 dark:bg-primary-900/30':'bg-purple-100 dark:bg-purple-900/30'">
+                      <i :class="p.mode==='single'?'fa-solid fa-robot text-primary-600 dark:text-primary-400':'fa-solid fa-sitemap text-purple-600 dark:text-purple-400'" class="text-sm"></i>
                     </div>
                     <div>
                       <div class="font-semibold text-sm" x-text="p.name"></div>
@@ -131,15 +157,15 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs text-red-400" @click="deleteProject(p.id)"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
-                <div class="text-xs text-slate-500 mb-1 truncate" x-text="p.target||'未设置目标'"></div>
-                <div class="text-xs text-slate-400 mb-3 line-clamp-2" x-text="p.description||'暂无描述'"></div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mb-1 truncate" x-text="p.target||'未设置目标'"></div>
+                <div class="text-xs text-slate-400 mb-3 line-clamp-2" x-text="p.description||'暂无任务'"></div>
                 <div class="flex items-center justify-between">
-                  <span class="tag px-2.5 py-0.5" :class="{'bg-green-100 text-green-700':p.status==='completed','bg-yellow-100 text-yellow-700':p.status==='running','bg-slate-100 text-slate-500':p.status==='idle'}" x-text="{'idle':'空闲','running':'运行中','completed':'已完成'}[p.status]||p.status"></span>
+                  <span class="tag px-2.5 py-0.5" :class="`status-${p.status}`" x-text="{'idle':'空闲','running':'运行中','completed':'已完成','paused':'已暂停'}[p.status]||p.status"></span>
                   <span class="text-xs text-slate-400" x-text="new Date(p.created_at).toLocaleDateString('zh-CN')"></span>
                 </div>
               </div>
             </template>
-            <div x-show="projects.length===0" class="col-span-3 text-center py-16 text-slate-400">
+            <div x-show="projects.length===0" class="col-span-3 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-folder-open text-4xl mb-3 block"></i>暂无项目
             </div>
           </div>
@@ -147,9 +173,18 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- PROJECT DETAIL -->
         <div x-show="page==='project-detail'">
-          <button class="btn btn-ghost mb-4 flex items-center gap-2 text-sm" @click="navigate('projects')">
-            <i class="fa-solid fa-arrow-left"></i> 返回项目列表
-          </button>
+          <div class="card mb-4 !p-3 flex items-center gap-2">
+            <button class="btn btn-ghost text-sm flex items-center gap-2 !px-2" @click="navigate('projects')">
+              <i class="fa-solid fa-arrow-left"></i> 返回项目列表
+            </button>
+            <template x-if="currentProject">
+              <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-600 pl-3">
+                <i class="fa-solid fa-folder text-primary-500 text-xs"></i>
+                <span x-text="currentProject.name"></span>
+                <span class="tag px-2 py-0.5 text-xs" :class="`status-${currentProject.status}`" x-text="{'idle':'空闲','running':'运行中','completed':'已完成','paused':'已暂停'}[currentProject.status]||currentProject.status"></span>
+              </div>
+            </template>
+          </div>
           <template x-if="currentProject">
             <div class="space-y-4">
               <div class="card">
@@ -158,15 +193,27 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     <h2 class="text-xl font-bold" x-text="currentProject.name"></h2>
                     <div class="text-sm text-slate-400 mt-1" x-text="currentProject.target||'无目标'"></div>
                   </div>
-                  <span class="tag px-3 py-1" :class="{'bg-green-100 text-green-700':currentProject.status==='completed','bg-yellow-100 text-yellow-700':currentProject.status==='running','bg-slate-100 text-slate-500':currentProject.status==='idle'}" x-text="{'idle':'空闲','running':'运行中','completed':'已完成'}[currentProject.status]"></span>
+                  <span class="tag px-3 py-1" :class="`status-${currentProject.status}`" x-text="{'idle':'空闲','running':'运行中','completed':'已完成','paused':'已暂停'}[currentProject.status]||currentProject.status"></span>
                 </div>
                 <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
-                  <label class="block text-xs font-medium text-slate-500 mb-2">任务指令</label>
-                  <textarea class="input code h-20 mb-3" x-model="runTask" placeholder="描述测试任务..."></textarea>
-                  <button class="btn btn-primary flex items-center gap-2" @click="runAgent()" :disabled="currentProject.status==='running'">
-                    <i class="fa-solid fa-play"></i>
-                    <span x-text="currentProject.status==='running'?'运行中...':'启动 Agent'"></span>
-                  </button>
+                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">任务指令 <span x-show="currentProject.status==='running'" class="text-yellow-500 dark:text-yellow-400">（运行中，不可更改）</span></label>
+                  <textarea class="input code h-20 mb-3" x-model="runTask" :disabled="currentProject.status==='running'" placeholder="描述测试任务..."></textarea>
+                  <div class="flex items-center gap-2">
+                    <button x-show="currentProject.status !== 'running'"
+                      class="btn btn-primary flex items-center gap-2" @click="runAgent()">
+                      <i class="fa-solid fa-play"></i>
+                      <span x-text="currentProject.status==='paused'?'继续执行':'启动 Agent'"></span>
+                    </button>
+                    <button x-show="currentProject.status === 'running'"
+                      class="btn flex items-center gap-2" style="background:#f59e0b;color:white;" @click="pauseAgent()"
+                      onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
+                      <i class="fa-solid fa-pause"></i> 暂停
+                    </button>
+                    <button x-show="currentProject.status !== 'idle'"
+                      class="btn btn-ghost flex items-center gap-2 text-slate-500 dark:text-slate-400" @click="restartAgent()">
+                      <i class="fa-solid fa-rotate-right"></i> 重启
+                    </button>
+                  </div>
                 </div>
               </div>
               <div class="card">
@@ -177,9 +224,38 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <div class="bg-slate-900 rounded-xl p-4 h-56 overflow-y-auto scroll-thin font-mono text-xs text-green-400 space-y-1" id="logBox">
                   <div x-show="agentLogs.length===0" class="text-slate-500">等待启动...</div>
                   <template x-for="(log,i) in agentLogs" :key="i">
-                    <div :class="log.type==='tool'?'text-yellow-300':log.type==='error'?'text-red-400':log.type==='result'?'text-cyan-300':'text-green-400'">
+                    <div :class="log.type==='think'?'text-purple-300':log.type==='tool'?'text-yellow-300':log.type==='tool_result'?'text-blue-300':log.type==='error'?'text-red-400':log.type==='result'?'text-cyan-300':'text-green-400'">
                       <span class="text-slate-500 select-none" x-text="'['+log.type.toUpperCase()+'] '"></span>
                       <span x-text="log.content"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+              <div class="card">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold text-sm">历史运行记录 (<span x-text="historyLogs.length"></span>)</h3>
+                  <button class="btn btn-ghost text-xs" @click="loadHistoryLogs()"><i class="fa-solid fa-rotate-right mr-1"></i>刷新</button>
+                </div>
+                <div x-show="historyLogs.length===0" class="text-center py-6 text-slate-400 text-sm">暂无历史记录</div>
+                <div class="space-y-2">
+                  <template x-for="log in historyLogs" :key="log.id">
+                    <div class="item-card overflow-hidden !p-0">
+                      <button class="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                        @click="historyExpanded[log.id]=!historyExpanded[log.id]">
+                        <span class="text-slate-500 dark:text-slate-400" x-text="new Date(log.created_at).toLocaleString('zh-CN')"></span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-slate-400" x-text="(log.entries||[]).length + ' 步'"></span>
+                          <i class="fa-solid text-slate-400" :class="historyExpanded[log.id]?'fa-chevron-up':'fa-chevron-down'"></i>
+                        </div>
+                      </button>
+                      <div x-show="historyExpanded[log.id]" class="bg-slate-900 p-3 font-mono text-xs space-y-1 max-h-64 overflow-y-auto scroll-thin">
+                        <template x-for="(entry,ei) in (log.entries||[])" :key="ei">
+                          <div :class="entry.type==='think'?'text-purple-300':entry.type==='tool'?'text-yellow-300':entry.type==='tool_result'?'text-blue-300':entry.type==='error'?'text-red-400':'text-cyan-300'">
+                            <span class="text-slate-500 select-none" x-text="'['+entry.type.toUpperCase()+'] '"></span>
+                            <span class="whitespace-pre-wrap break-all" x-text="entry.content"></span>
+                          </div>
+                        </template>
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -188,7 +264,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <h3 class="font-semibold text-sm mb-4">项目漏洞 (<span x-text="projectVulns.length"></span>)</h3>
                 <div class="space-y-2">
                   <template x-for="v in projectVulns" :key="v.id">
-                    <div class="border border-slate-100 dark:border-slate-700 rounded-xl p-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer" @click="openVuln(v)">
+                    <div class="item-card flex items-center gap-3 cursor-pointer" @click="openVuln(v)">
                       <span class="tag px-2.5 py-0.5" :class="'badge-'+v.severity" x-text="v.severity.toUpperCase()"></span>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm font-medium truncate" x-text="v.title"></div>
@@ -206,27 +282,30 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- VULNERABILITIES -->
         <div x-show="page==='vulns'">
-          <div class="flex flex-wrap items-center gap-3 mb-6">
-            <select class="input w-40" x-model="vulnFilter.severity" @change="loadVulns()">
-              <option value="">所有严重性</option>
-              <option>critical</option><option>high</option><option>medium</option><option>low</option><option>info</option>
-            </select>
-            <select class="input w-40" x-model="vulnFilter.status" @change="loadVulns()">
-              <option value="">所有状态</option>
-              <option value="pending">待审核</option><option value="confirmed">已确认</option><option value="false_positive">误报</option>
-            </select>
-            <button class="btn btn-primary flex items-center gap-2 ml-auto"
-              @click="openPanel('vulnForm');editItem=null;vulnForm={project_id:'',title:'',description:'',severity:'medium',vuln_type:'',target:'',poc:'',request_raw:'',response_raw:'',impact:'',recommendation:''}">
-              <i class="fa-solid fa-plus"></i> 新增漏洞
-            </button>
+          <div class="card mb-5 !p-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <select class="input w-40" x-model="vulnFilter.severity" @change="loadVulns()">
+                <option value="">所有严重性</option>
+                <option>critical</option><option>high</option><option>medium</option><option>low</option><option>info</option>
+              </select>
+              <select class="input w-40" x-model="vulnFilter.status" @change="loadVulns()">
+                <option value="">所有状态</option>
+                <option value="pending">待审核</option><option value="confirmed">已确认</option><option value="false_positive">误报</option>
+              </select>
+              <div class="ml-auto text-xs text-slate-400" x-text="vulns.length + ' 条漏洞'"></div>
+              <button class="btn btn-primary flex items-center gap-2"
+                @click="openPanel('vulnForm');editItem=null;vulnForm={project_id:'',title:'',description:'',severity:'medium',vuln_type:'',target:'',poc:'',request_raw:'',response_raw:'',impact:'',recommendation:''}">
+                <i class="fa-solid fa-plus"></i> 新增漏洞
+              </button>
+            </div>
           </div>
           <div class="space-y-3">
             <template x-for="v in vulns" :key="v.id">
-              <div class="card flex items-center gap-4 cursor-pointer hover:shadow-md !p-4" @click="openVuln(v)">
+              <div class="item-card flex items-center gap-4 cursor-pointer" @click="openVuln(v)">
                 <span class="tag px-2.5 py-1 font-semibold" :class="'badge-'+v.severity" x-text="v.severity.toUpperCase()"></span>
                 <div class="flex-1 min-w-0">
                   <div class="font-semibold text-sm" x-text="v.title"></div>
-                  <div class="text-xs text-slate-400 mt-0.5"><span x-text="v.vuln_type"></span><span class="mx-1">·</span><span x-text="v.target"></span></div>
+                  <div class="text-xs text-slate-400 dark:text-slate-400 mt-0.5"><span x-text="v.vuln_type"></span><span class="mx-1">·</span><span x-text="v.target"></span></div>
                 </div>
                 <span class="tag px-2.5 py-0.5" :class="'badge-'+v.status" x-text="{'pending':'待审核','confirmed':'已确认','false_positive':'误报'}[v.status]||v.status"></span>
                 <div class="flex gap-1" @click.stop>
@@ -242,7 +321,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- MCP -->
         <div x-show="page==='mcps'">
-          <div class="flex justify-end mb-6">
+          <div class="card mb-5 !p-4 flex items-center justify-between">
+            <div>
+              <div class="font-semibold text-sm">MCP 服务器</div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="mcps.length + ' 个已配置'"></div>
+            </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('mcpForm');editItem=null;mcpForm={name:'',description:'',command:'',args_json:'[]',env_json:'{}',enabled:true}">
               <i class="fa-solid fa-plus"></i> 新增 MCP
@@ -250,7 +333,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <template x-for="m in mcps" :key="m.id">
-              <div class="card">
+              <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"><i class="fa-solid fa-plug text-indigo-600 text-sm"></i></div>
@@ -271,7 +354,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <div class="text-xs text-slate-400 line-clamp-2" x-text="m.description||'暂无描述'"></div>
               </div>
             </template>
-            <div x-show="mcps.length===0" class="col-span-2 text-center py-16 text-slate-400">
+            <div x-show="mcps.length===0" class="col-span-2 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-plug text-4xl mb-3 block"></i>暂无 MCP
             </div>
           </div>
@@ -279,7 +362,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- TOOLS -->
         <div x-show="page==='tools'">
-          <div class="flex justify-end mb-6">
+          <div class="card mb-5 !p-4 flex items-center justify-between">
+            <div>
+              <div class="font-semibold text-sm">工具集</div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="tools.length + ' 个已注册'"></div>
+            </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('toolForm');editItem=null;toolForm={name:'',description:'',code:'',enabled:true}">
               <i class="fa-solid fa-plus"></i> 新增 Tool
@@ -287,7 +374,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <template x-for="t in tools" :key="t.id">
-              <div class="card">
+              <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center"><i class="fa-solid fa-wrench text-green-600 text-sm"></i></div>
@@ -305,7 +392,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <pre class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs overflow-x-auto max-h-20 scroll-thin text-slate-600 dark:text-slate-300" x-text="t.code.slice(0,150)+(t.code.length>150?'...':'')"></pre>
               </div>
             </template>
-            <div x-show="tools.length===0" class="col-span-2 text-center py-16 text-slate-400">
+            <div x-show="tools.length===0" class="col-span-2 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-wrench text-4xl mb-3 block"></i>暂无 Tool
             </div>
           </div>
@@ -313,7 +400,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- AGENTS -->
         <div x-show="page==='agents'">
-          <div class="flex justify-end mb-6">
+          <div class="card mb-5 !p-4 flex items-center justify-between">
+            <div>
+              <div class="font-semibold text-sm">智能体列表</div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="agents.length + ' 个已配置'"></div>
+            </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('agentForm');editItem=null;agentForm={name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]'}">
               <i class="fa-solid fa-plus"></i> 新增智能体
@@ -321,7 +412,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <template x-for="a in agents" :key="a.id">
-              <div class="card">
+              <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center" :class="a.mode==='single'?'bg-primary-100':'bg-purple-100'">
@@ -341,7 +432,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <div class="text-xs text-slate-400 bg-slate-50 dark:bg-slate-900 rounded-lg p-2 font-mono line-clamp-3" x-text="(a.system_prompt||'').slice(0,200)+'...'"></div>
               </div>
             </template>
-            <div x-show="agents.length===0" class="col-span-2 text-center py-16 text-slate-400">
+            <div x-show="agents.length===0" class="col-span-2 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-robot text-4xl mb-3 block"></i>暂无智能体
             </div>
           </div>
@@ -349,7 +440,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- SKILLS -->
         <div x-show="page==='skills'">
-          <div class="flex justify-end mb-6">
+          <div class="card mb-5 !p-4 flex items-center justify-between">
+            <div>
+              <div class="font-semibold text-sm">技能库</div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="skills.length + ' 个技能'"></div>
+            </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('skillForm');editItem=null;skillForm={name:'',description:'',content:'',tags_json:'[]'};skillTagsRaw=''">
               <i class="fa-solid fa-plus"></i> 新增 Skill
@@ -357,7 +452,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <template x-for="s in skills" :key="s.id">
-              <div class="card">
+              <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><i class="fa-solid fa-bolt text-amber-600 text-sm"></i></div>
@@ -376,7 +471,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
             </template>
-            <div x-show="skills.length===0" class="col-span-3 text-center py-16 text-slate-400">
+            <div x-show="skills.length===0" class="col-span-3 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-bolt text-4xl mb-3 block"></i>暂无 Skill
             </div>
           </div>
@@ -472,8 +567,8 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <input class="input" x-model="projectForm.target" placeholder="https://target.example.com"/>
               </div>
               <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label>
-                <textarea class="input h-24" x-model="projectForm.description" placeholder="项目描述..."></textarea>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">任务 <span class="text-slate-400 font-normal text-xs">（将作为智能体的默认指令）</span></label>
+                <textarea class="input h-24" x-model="projectForm.description" placeholder="描述要执行的渗透测试任务，如：寻找 XSS/SQL 注入漏洞..."></textarea>
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1.5">运作模式</label>
@@ -696,6 +791,7 @@ function app() {
     projects:[], vulns:[], mcps:[], tools:[], agents:[], skills:[], vulnCount:0,
     currentProject:null, projectVulns:[], selectedVuln:null, vulnTab:'描述', reviewNote:'',
     agentLogs:[], runTask:'', wsConn:null,
+    historyLogs:[], historyExpanded:{},
     vulnFilter:{severity:'',status:''},
 
     projectForm:{name:'',target:'',description:'',mode:'single',agent_id:''},
@@ -773,7 +869,8 @@ function app() {
     },
 
     async loadProjects(){this.projects=await this.api('GET','/api/projects/')},
-    async openProject(p){this.currentProject=p;this.page='project-detail';this.agentLogs=[];this.closePanel();this.projectVulns=await this.api('GET',`/api/vulns/?project_id=${p.id}`)},
+    async openProject(p){this.currentProject=p;this.page='project-detail';this.agentLogs=[];this.historyLogs=[];this.historyExpanded={};this.runTask=p.description||'';this.closePanel();[this.projectVulns,this.historyLogs]=await Promise.all([this.api('GET',`/api/vulns/?project_id=${p.id}`),this.api('GET',`/api/logs/${p.id}`).catch(()=>[])])},
+    async loadHistoryLogs(){if(this.currentProject)this.historyLogs=await this.api('GET',`/api/logs/${this.currentProject.id}`).catch(()=>[])},
     async saveProject(){try{if(this.editItem)await this.api('PATCH',`/api/projects/${this.editItem.id}`,this.projectForm);else await this.api('POST','/api/projects/',{...this.projectForm,agent_id:this.projectForm.agent_id||null});await this.loadProjects();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editProject(p){this.editItem=p;this.projectForm={name:p.name,target:p.target,description:p.description,mode:p.mode,agent_id:p.agent_id||''};this.openPanel('projectForm')},
     async deleteProject(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/projects/${id}`);await this.loadProjects();this.toast('已删除')},
@@ -784,9 +881,21 @@ function app() {
       const ws=new WebSocket(`ws://localhost:8888/ws/run/${this.currentProject.id}`)
       this.wsConn=ws
       ws.onopen=()=>ws.send(JSON.stringify({task:this.runTask,extra:''}))
-      ws.onmessage=(e)=>{const d=JSON.parse(e.data);this.agentLogs.push(d);if(d.type==='done'){this.currentProject.status='completed';this.loadProjectVulns()}if(d.type==='error')this.currentProject.status='idle';this.$nextTick(()=>{const b=document.getElementById('logBox');if(b)b.scrollTop=b.scrollHeight})}
-      ws.onclose=()=>{if(this.currentProject)this.currentProject.status='idle'}
+      ws.onmessage=(e)=>{const d=JSON.parse(e.data);this.agentLogs.push(d);if(d.type==='done'){this.currentProject.status='completed';this.loadProjectVulns();this.loadHistoryLogs()}if(d.type==='error')this.currentProject.status='idle';this.$nextTick(()=>{const b=document.getElementById('logBox');if(b)b.scrollTop=b.scrollHeight})}
+      ws.onclose=()=>{if(this.currentProject&&this.currentProject.status==='running')this.currentProject.status='idle'}
       this.currentProject.status='running'
+    },
+    pauseAgent(){
+      if(this.currentProject)this.currentProject.status='paused'
+      if(this.wsConn){this.wsConn.close();this.wsConn=null}
+      if(this.currentProject)this.api('PATCH',`/api/projects/${this.currentProject.id}`,{status:'paused'})
+    },
+    restartAgent(){
+      if(this.wsConn){this.wsConn.close();this.wsConn=null}
+      this.agentLogs=[]
+      if(!this.currentProject)return
+      this.api('PATCH',`/api/projects/${this.currentProject.id}`,{status:'idle'})
+        .then(()=>{this.currentProject.status='idle';this.runAgent()})
     },
     async loadProjectVulns(){this.projectVulns=await this.api('GET',`/api/vulns/?project_id=${this.currentProject.id}`)},
 
