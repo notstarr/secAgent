@@ -1,5 +1,7 @@
 """MCP servers CRUD router."""
 
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -52,3 +54,42 @@ def delete_mcp(mid: int, db: Session = Depends(get_db)):
     db.delete(m)
     db.commit()
     return {"ok": True}
+
+
+@router.post("/{mid}/test")
+async def test_mcp(mid: int, db: Session = Depends(get_db)):
+    """Connect to MCP server, list tools, return result."""
+    import asyncio
+    import shlex
+
+    m = db.get(MCPServer, mid)
+    if not m:
+        raise HTTPException(404)
+
+    cmd_parts = shlex.split(m.command or "python")
+    args = json.loads(m.args_json or "[]")
+    all_args = cmd_parts[1:] + args
+    env = json.loads(m.env_json or "{}")
+
+    try:
+        from mcp import ClientSession
+        from mcp.client.stdio import StdioServerParameters, stdio_client
+
+        params = StdioServerParameters(command=cmd_parts[0], args=all_args, env=env)
+
+        async def _run():
+            async with stdio_client(params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    tools_result = await session.list_tools()
+                    return [
+                        {"name": t.name, "description": t.description or ""}
+                        for t in tools_result.tools
+                    ]
+
+        tools = await asyncio.wait_for(_run(), timeout=20)
+        return {"ok": True, "tools": tools}
+    except asyncio.TimeoutError:
+        return {"ok": False, "error": "连接超时（20s），请检查命令配置"}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}

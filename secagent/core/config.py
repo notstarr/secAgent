@@ -24,7 +24,7 @@ class AgentConfig:
         default_factory=lambda: int(os.environ.get("SECAGENT_MAX_TOKENS", "8192"))
     )
     max_iterations: int = field(
-        default_factory=lambda: int(os.environ.get("SECAGENT_MAX_ITERATIONS", "50"))
+        default_factory=lambda: int(os.environ.get("SECAGENT_MAX_ITERATIONS", "100"))
     )
 
     # Optional OpenAI-compatible endpoint

@@ -17,3 +17,8 @@ build/
 htmlcov/
 *.log
 reports/
+
+# Runtime data — contains API keys and user files, do not commit
+*.db
+secagent_files/
+credentials/

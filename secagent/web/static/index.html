@@ -203,6 +203,12 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
                   <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">任务指令 <span x-show="currentProject.status==='running'" class="text-yellow-500 dark:text-yellow-400">（运行中，不可更改）</span></label>
                   <textarea class="input code h-20 mb-3" x-model="runTask" :disabled="currentProject.status==='running'" placeholder="描述测试任务..."></textarea>
+                  <!-- 暂停后补充指引区域 -->
+                  <div x-show="currentProject.status==='paused'" class="mb-3 p-3 rounded-lg border border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20">
+                    <label class="block text-xs font-medium text-orange-600 dark:text-orange-400 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>续跑补充信息（可选）</label>
+                    <textarea class="input code h-16" x-model="supplementText" placeholder="如：重点关注 /admin 路径，尝试绕过认证..."></textarea>
+                    <p class="text-xs text-slate-400 mt-1">点击"继续执行"后，此内容将作为补充指引注入对话历史</p>
+                  </div>
                   <div class="item-card !p-3 flex items-center gap-2 flex-wrap">
                     <button x-show="currentProject.status !== 'running'"
                       class="btn btn-primary flex items-center gap-2" @click="runAgent()">
@@ -214,6 +220,12 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                       onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
                       <i class="fa-solid fa-pause"></i> 暂停
                     </button>
+                    <button x-show="currentProject.status === 'running' || currentProject.status === 'paused'"
+                      class="btn flex items-center gap-2" style="background:#ef4444;color:white;" @click="terminateAgent()"
+                      onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'"
+                      :title="'强制终止并清除快照'">
+                      <i class="fa-solid fa-stop"></i> 终止
+                    </button>
                     <button x-show="currentProject.status !== 'idle'"
                       class="btn btn-ghost flex items-center gap-2 text-slate-500 dark:text-slate-400" @click="restartAgent()">
                       <i class="fa-solid fa-rotate-right"></i> 重启
@@ -224,27 +236,39 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                   </div>
                 </div>
               </div>
+              <!-- 运行记录（实时+历史合并） -->
               <div class="card">
                 <div class="flex items-center justify-between mb-3">
-                  <h3 class="font-semibold text-sm">实时输出</h3>
-                  <button class="btn btn-ghost text-xs" @click="agentLogs=[]">清空</button>
-                </div>
-                <div class="bg-slate-900 rounded-xl p-4 h-56 overflow-y-auto scroll-thin font-mono text-xs text-green-400 space-y-1" id="logBox">
-                  <div x-show="agentLogs.length===0" class="text-slate-500">等待启动...</div>
-                  <template x-for="(log,i) in agentLogs" :key="i">
-                    <div :class="log.type==='think'?'text-purple-300':log.type==='tool'?'text-yellow-300':log.type==='tool_result'?'text-blue-300':log.type==='error'?'text-red-400':log.type==='result'?'text-cyan-300':'text-green-400'">
-                      <span class="text-slate-500 select-none" x-text="'['+log.type.toUpperCase()+'] '"></span>
-                      <span x-text="log.content"></span>
-                    </div>
-                  </template>
-                </div>
-              </div>
-              <div class="card">
-                <div class="flex items-center justify-between mb-3">
-                  <h3 class="font-semibold text-sm">历史运行记录 (<span x-text="historyLogs.length"></span>)</h3>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-semibold text-sm">运行记录</h3>
+                    <span x-show="currentProject.status==='running'" class="flex items-center gap-1 text-xs text-yellow-500"><i class="fa-solid fa-spinner fa-spin text-xs"></i>运行中</span>
+                  </div>
                   <button class="btn btn-ghost text-xs" @click="loadHistoryLogs()"><i class="fa-solid fa-rotate-right mr-1"></i>刷新</button>
                 </div>
-                <div x-show="historyLogs.length===0" class="text-center py-6 text-slate-400 text-sm">暂无历史记录</div>
+                <!-- 当前运行条（仅运行中或有live条目时显示） -->
+                <div x-show="liveEntries.length>0" class="item-card overflow-hidden !p-0 mb-2">
+                  <div class="w-full flex items-center justify-between px-3 py-2 text-xs bg-yellow-50 dark:bg-yellow-900/20">
+                    <span class="text-yellow-600 dark:text-yellow-400 font-medium flex items-center gap-1"><i class="fa-solid fa-circle-dot fa-xs"></i> 当前运行</span>
+                    <div class="flex items-center gap-2">
+                      <span x-show="runTokens.total>0" class="text-slate-400 flex items-center gap-1" :title="'Prompt: '+runTokens.prompt+' / Completion: '+runTokens.completion">
+                        <i class="fa-solid fa-coins fa-xs text-amber-400"></i>
+                        <span x-text="runTokens.total.toLocaleString()+'  tokens'"></span>
+                      </span>
+                      <span class="text-slate-400" x-text="liveEntries.length + ' 步'"></span>
+                      <button class="text-slate-400 hover:text-slate-600" @click="liveExpanded=!liveExpanded"><i class="fa-solid" :class="liveExpanded?'fa-chevron-up':'fa-chevron-down'"></i></button>
+                    </div>
+                  </div>
+                  <div x-show="liveExpanded" class="bg-slate-900 p-3 font-mono text-xs space-y-1 max-h-72 overflow-y-auto scroll-thin" id="logBox">
+                    <template x-for="(entry,i) in liveEntries" :key="i">
+                      <div :class="entry.type==='think'?'text-purple-300':entry.type==='tool'?'text-yellow-300':entry.type==='tool_result'?'text-blue-300':entry.type==='error'?'text-red-400':entry.type==='result'?'text-cyan-300':'text-green-400'">
+                        <span class="text-slate-500 select-none" x-text="'['+entry.type.toUpperCase()+'] '"></span>
+                        <span class="whitespace-pre-wrap break-all" :class="entry.type==='info'&&entry.content&&entry.content.startsWith('[Artifact]')?'text-teal-300':''" x-text="entry.content"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                <!-- 历史记录列表 -->
+                <div x-show="historyLogs.length===0 && liveEntries.length===0" class="text-center py-6 text-slate-400 text-sm">暂无运行记录</div>
                 <div class="space-y-2">
                   <template x-for="log in historyLogs" :key="log.id">
                     <div class="item-card overflow-hidden !p-0">
@@ -351,15 +375,33 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <div class="relative inline-flex items-center cursor-pointer" @click.stop>
-                      <input type="checkbox" class="sr-only peer" :checked="m.enabled" @change="toggleMCP(m)">
-                      <div class="w-9 h-5 bg-slate-200 peer-checked:bg-primary-500 rounded-full peer transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-4 after:h-4 after:transition-all peer-checked:after:translate-x-4"></div>
-                    </div>
+                    <button type="button" @click.stop="toggleMCP(m)"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                      :class="m.enabled ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'">
+                      <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        :class="m.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                    </button>
                     <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs" @click="editMCP(m)"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs text-red-400" @click="deleteMCP(m.id)"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
-                <div class="text-xs text-slate-400 line-clamp-2" x-text="m.description||'暂无描述'"></div>
+                <div class="text-xs text-slate-400 line-clamp-2 mb-3" x-text="m.description||'暂无描述'"></div>
+                <!-- 测试区 -->
+                <div class="border-t border-slate-100 dark:border-slate-700/50 pt-2 mt-1">
+                  <div class="flex items-center gap-2">
+                    <button class="btn btn-ghost text-xs flex items-center gap-1 text-indigo-500 dark:text-indigo-400"
+                      @click="testMCP(m)" :disabled="m._testing">
+                      <i class="fa-solid" :class="m._testing?'fa-spinner fa-spin':'fa-flask'"></i>
+                      <span x-text="m._testing?'测试中...':'测试连接'"></span>
+                    </button>
+                    <span x-show="m._testResult" class="text-xs" :class="m._testOk?'text-green-500 dark:text-green-400':'text-red-500 dark:text-red-400'" x-text="m._testResult"></span>
+                  </div>
+                  <div x-show="m._testOk && m._testTools" class="mt-1 flex flex-wrap gap-1">
+                    <template x-for="tool in (m._testTools||[])" :key="tool.name">
+                      <span class="tag bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 text-xs" x-text="tool.name"></span>
+                    </template>
+                  </div>
+                </div>
               </div>
             </template>
             <div x-show="mcps.length===0" class="col-span-2 card text-center py-16 text-slate-400">
@@ -392,15 +434,29 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <div class="relative inline-flex items-center cursor-pointer" @click.stop>
-                      <input type="checkbox" class="sr-only peer" :checked="t.enabled" @change="toggleTool(t)">
-                      <div class="w-9 h-5 bg-slate-200 peer-checked:bg-primary-500 rounded-full peer transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-4 after:h-4 after:transition-all peer-checked:after:translate-x-4"></div>
-                    </div>
+                    <button type="button" @click.stop="toggleTool(t)"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                      :class="t.enabled ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'">
+                      <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        :class="t.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                    </button>
                     <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs" @click="editTool(t)"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs text-red-400" @click="deleteTool(t.id)"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
                 <pre class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs overflow-x-auto max-h-20 scroll-thin text-slate-600 dark:text-slate-300" x-text="t.code.slice(0,150)+(t.code.length>150?'...':'')"></pre>
+                <!-- 测试区 -->
+                <div class="border-t border-slate-100 dark:border-slate-700/50 pt-2 mt-2">
+                  <div class="flex items-center gap-2">
+                    <button class="btn btn-ghost text-xs flex items-center gap-1 text-green-600 dark:text-green-400"
+                      @click="runToolTest(t)" :disabled="t._testing">
+                      <i class="fa-solid" :class="t._testing?'fa-spinner fa-spin':'fa-flask'"></i>
+                      <span x-text="t._testing?'测试中...':'测试调用'"></span>
+                    </button>
+                    <span x-show="t._testResult" class="text-xs" :class="t._testOk?'text-green-500 dark:text-green-400':'text-red-500 dark:text-red-400'" x-text="t._testOk?'✓ 调用成功':'✗ '+t._testError"></span>
+                  </div>
+                  <pre x-show="t._testResult && t._testOk" class="bg-slate-900 rounded p-2 text-xs text-green-300 max-h-32 overflow-y-auto scroll-thin whitespace-pre-wrap mt-1" x-text="t._testResult"></pre>
+                </div>
               </div>
             </template>
             <div x-show="tools.length===0" class="col-span-2 card text-center py-16 text-slate-400">
@@ -488,6 +544,89 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
         </div>
 
+        <!-- FILES -->
+        <div x-show="page==='files'" x-init="if(page==='files') loadFiles()">
+          <div class="card mb-5 !p-4 flex flex-wrap items-center gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm">文件管理</div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="files.length + ' 个文件'"></div>
+            </div>
+            <!-- project filter -->
+            <select class="input text-sm w-44" x-model="fileFilterProject"
+              @change="loadFiles(fileFilterProject||null)">
+              <option value="">全部项目</option>
+              <template x-for="p in projects" :key="p.id">
+                <option :value="p.id" x-text="p.name"></option>
+              </template>
+            </select>
+            <!-- upload -->
+            <label class="btn btn-primary flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-upload"></i> 上传文件
+              <input type="file" class="hidden" @change="uploadFile($event.target);$event.target.value=''">
+            </label>
+          </div>
+
+          <!-- file grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+            <template x-for="f in files" :key="f.id">
+              <div class="item-card !p-3 flex flex-col gap-2 group">
+                <!-- thumbnail / icon -->
+                <div class="w-full aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center cursor-pointer"
+                  @click="filePreview=f">
+                  <template x-if="f.mime_type && f.mime_type.startsWith('image/')">
+                    <img :src="`/api/files/${f.id}/download`" class="w-full h-full object-cover">
+                  </template>
+                  <template x-if="!(f.mime_type && f.mime_type.startsWith('image/'))">
+                    <i class="fa-solid fa-file text-3xl text-slate-400"></i>
+                  </template>
+                </div>
+                <!-- name -->
+                <div class="text-xs font-medium truncate" x-text="f.name" :title="f.name"></div>
+                <!-- meta -->
+                <div class="text-xs text-slate-400 truncate" x-text="f.project_name"></div>
+                <div class="text-xs text-slate-400" x-text="(f.size/1024).toFixed(1)+'KB · '+f.source"></div>
+                <!-- actions -->
+                <div class="flex gap-1 mt-auto">
+                  <a :href="`/api/files/${f.id}/download`" :download="f.name"
+                    class="btn btn-ghost flex-1 h-7 text-xs flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-download text-xs"></i>下载
+                  </a>
+                  <button class="btn btn-ghost h-7 w-7 flex items-center justify-center text-red-400 text-xs"
+                    @click="deleteFile(f.id)"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </div>
+            </template>
+            <div x-show="files.length===0" class="col-span-6 card text-center py-16 text-slate-400">
+              <i class="fa-solid fa-images text-4xl mb-3 block"></i>暂无文件
+            </div>
+          </div>
+        </div>
+
+        <!-- FILE PREVIEW MODAL -->
+        <div x-show="filePreview" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="filePreview=null">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-3xl w-full mx-4 overflow-hidden flex flex-col" style="max-height:90vh">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
+              <span class="font-semibold text-sm truncate" x-text="filePreview?.name"></span>
+              <button class="btn btn-ghost w-8 h-8 flex items-center justify-center" @click="filePreview=null"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto flex items-center justify-center p-4 min-h-0">
+              <template x-if="filePreview && filePreview.mime_type && filePreview.mime_type.startsWith('image/')">
+                <img :src="`/api/files/${filePreview?.id}/download`" class="max-w-full max-h-full rounded-lg">
+              </template>
+              <template x-if="filePreview && !(filePreview.mime_type && filePreview.mime_type.startsWith('image/'))">
+                <div class="text-center py-10 text-slate-400"><i class="fa-solid fa-file text-6xl mb-4 block"></i><p x-text="filePreview?.name"></p></div>
+              </template>
+            </div>
+            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-400">
+              <span x-text="filePreview ? filePreview.project_name + ' · ' + filePreview.source + ' · ' + (filePreview.size/1024).toFixed(1)+'KB' : ''"></span>
+              <a :href="`/api/files/${filePreview?.id}/download`" :download="filePreview?.name"
+                class="btn btn-primary text-xs flex items-center gap-1 !px-3 !py-1.5">
+                <i class="fa-solid fa-download"></i>下载
+              </a>
+            </div>
+          </div>
+        </div>
+
         <!-- SETTINGS -->
         <div x-show="page==='settings'">
           <div class="max-w-2xl space-y-4">
@@ -522,6 +661,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                   <label class="block text-xs font-medium text-slate-500 mb-1">模型名称</label>
                   <input class="input" x-model="settingsForm.model" placeholder="如 claude-opus-4-5-20250929"/>
                 </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">智能体最大迭代次数</label>
+                  <input class="input" type="number" min="1" max="5000" x-model="settingsForm.max_iterations" placeholder="100"/>
+                  <p class="text-xs text-slate-400 mt-1">每次运行最多调用工具的轮次，默认 100</p>
+                </div>
                 <div x-show="settingsForm.provider!=='anthropic'">
                   <label class="block text-xs font-medium text-slate-500 mb-1">Base URL</label>
                   <input class="input" x-model="settingsForm.base_url" placeholder="https://your-endpoint/v1"/>
@@ -535,6 +679,43 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
                 <button class="btn btn-primary w-full" @click="saveSettings()">
                   <i class="fa-solid fa-floppy-disk mr-2"></i>保存配置
+                </button>
+              </div>
+            </div>
+            <div class="card">
+              <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fa-solid fa-compress text-primary-500"></i> 上下文管理</h3>
+              <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">工具结果截断（字符）</label>
+                    <input class="input" type="number" min="1000" max="100000" x-model="settingsForm.tool_result_max_chars" placeholder="8000"/>
+                    <p class="text-xs text-slate-400 mt-1">默认 8000，browser_execute_js 不截断</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">页面源码截断（字符）</label>
+                    <input class="input" type="number" min="1000" max="50000" x-model="settingsForm.page_source_max_chars" placeholder="5000"/>
+                    <p class="text-xs text-slate-400 mt-1">browser_get_page_source 专用</p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                  <div>
+                    <div class="font-medium text-sm">启用 LLM 摘要压缩</div>
+                    <div class="text-xs text-slate-400 mt-0.5">每 N 轮自动将旧消息压缩为摘要，防止爆 context window</div>
+                  </div>
+                  <button class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                    :class="settingsForm.context_compress_enabled?'bg-primary-500':'bg-slate-300 dark:bg-slate-600'"
+                    @click="settingsForm.context_compress_enabled=!settingsForm.context_compress_enabled">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                      :class="settingsForm.context_compress_enabled?'translate-x-6':'translate-x-1'"></span>
+                  </button>
+                </div>
+                <div x-show="settingsForm.context_compress_enabled">
+                  <label class="block text-xs font-medium text-slate-500 mb-1">每隔多少轮压缩一次</label>
+                  <input class="input" type="number" min="5" max="200" x-model="settingsForm.context_compress_every_n" placeholder="30"/>
+                  <p class="text-xs text-slate-400 mt-1">建议 20-50，压缩会额外消耗一次 API 调用</p>
+                </div>
+                <button class="btn btn-primary w-full" @click="saveSettings()">
+                  <i class="fa-solid fa-floppy-disk mr-2"></i>保存上下文配置
                 </button>
               </div>
             </div>
@@ -695,7 +876,15 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
               <div><label class="block text-xs font-medium text-slate-500 mb-1.5">启动命令</label><input class="input font-mono text-xs" x-model="mcpForm.command" placeholder="python -m my_mcp_server"/></div>
               <div><label class="block text-xs font-medium text-slate-500 mb-1.5">参数 (JSON 数组)</label><input class="input font-mono text-xs" x-model="mcpForm.args_json" placeholder='["--port","8080"]'/></div>
               <div><label class="block text-xs font-medium text-slate-500 mb-1.5">环境变量 (JSON 对象)</label><textarea class="input code h-24" x-model="mcpForm.env_json" placeholder='{"API_KEY":"xxx"}'></textarea></div>
-              <div class="flex items-center gap-3"><label class="text-sm">默认启用</label><input type="checkbox" x-model="mcpForm.enabled" class="w-4 h-4 accent-primary-600"/></div>
+              <div class="flex items-center gap-3">
+                <label class="text-sm">默认启用</label>
+                <button type="button" @click="mcpForm.enabled=!mcpForm.enabled"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                  :class="mcpForm.enabled ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'">
+                  <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                    :class="mcpForm.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                </button>
+              </div>
             </div>
           </template>
 
@@ -708,7 +897,15 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <label class="block text-xs font-medium text-slate-500 mb-1.5">Python 代码</label>
                 <textarea class="input code h-72" x-model="toolForm.code" placeholder="@anthropic.beta_tool&#10;def my_tool(param: str) -> str:&#10;    '''工具描述'''&#10;    return ..."></textarea>
               </div>
-              <div class="flex items-center gap-3"><label class="text-sm">启用</label><input type="checkbox" x-model="toolForm.enabled" class="w-4 h-4 accent-primary-600"/></div>
+              <div class="flex items-center gap-3">
+                <label class="text-sm">启用</label>
+                <button type="button" @click="toolForm.enabled=!toolForm.enabled"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                  :class="toolForm.enabled ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'">
+                  <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                    :class="toolForm.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                </button>
+              </div>
             </div>
           </template>
 
@@ -793,16 +990,21 @@ function app() {
     navItems: [
       {id:'projects', label:'项目',     icon:'fa-solid fa-folder'},
       {id:'vulns',    label:'漏洞',     icon:'fa-solid fa-bug'},
+      {id:'files',    label:'文件管理', icon:'fa-solid fa-images'},
       {id:'mcps',     label:'MCP 管理', icon:'fa-solid fa-plug'},
       {id:'tools',    label:'Tool 管理',icon:'fa-solid fa-wrench'},
       {id:'agents',   label:'智能体',   icon:'fa-solid fa-robot'},
       {id:'skills',   label:'Skill',    icon:'fa-solid fa-bolt'},
     ],
 
-    projects:[], vulns:[], mcps:[], tools:[], agents:[], skills:[], vulnCount:0,
+    projects:[], vulns:[], mcps:[], tools:[], agents:[], skills:[], files:[], vulnCount:0,
     currentProject:null, projectVulns:[], selectedVuln:null, vulnTab:'描述', reviewNote:'',
-    agentLogs:[], runTask:'', wsConn:null,
+    liveEntries:[], liveExpanded:true, runTask:'', wsConn:null,
     historyLogs:[], historyExpanded:{},
+    runTokens:{prompt:0,completion:0,total:0},
+    supplementText:'',
+    mcpTestResults:{}, toolTestResults:{},
+    filePreview:null, fileUploadProjectId:'', fileFilterProject:'',
     vulnFilter:{severity:'',status:''},
 
     projectForm:{name:'',target:'',description:'',mode:'single',agent_id:''},
@@ -812,7 +1014,7 @@ function app() {
     agentForm:{name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]'},
     skillForm:{name:'',description:'',content:'',tags_json:'[]'},
     skillTagsRaw:'',
-    settingsForm:{provider:'anthropic',model:'',api_key:'',base_url:''},
+    settingsForm:{provider:'anthropic',model:'',api_key:'',base_url:'',max_iterations:'100',tool_result_max_chars:'8000',page_source_max_chars:'5000',context_compress_enabled:false,context_compress_every_n:'30'},
     showKey:false,
 
     get panelTitle() {
@@ -857,10 +1059,10 @@ function app() {
 
     async init() {
       if (this.darkMode) document.documentElement.classList.add('dark')
-      await Promise.all([this.loadProjects(),this.loadVulns(),this.loadMCPs(),this.loadTools(),this.loadAgents(),this.loadSkills(),this.loadSettings()])
+      await Promise.all([this.loadProjects(),this.loadVulns(),this.loadMCPs(),this.loadTools(),this.loadAgents(),this.loadSkills(),this.loadSettings(),this.loadFiles()])
     },
 
-    navigate(p) { this.page=p; this.closePanel(); if(p==='vulns') this.loadVulns() },
+    navigate(p) { this.page=p; this.closePanel(); if(p==='vulns') this.loadVulns(); if(p==='files') this.loadFiles(this.fileFilterProject||null) },
     saveDarkMode() { localStorage.setItem('darkMode',this.darkMode); document.documentElement.classList.toggle('dark',this.darkMode) },
     openPanel(type) { this.rightPanel=type },
     closePanel() { this.rightPanel=null; this.editItem=null },
@@ -880,19 +1082,54 @@ function app() {
     },
 
     async loadProjects(){this.projects=await this.api('GET','/api/projects/')},
-    async openProject(p){this.currentProject=p;this.page='project-detail';this.agentLogs=[];this.historyLogs=[];this.historyExpanded={};this.runTask=p.description||'';this.closePanel();[this.projectVulns,this.historyLogs]=await Promise.all([this.api('GET',`/api/vulns/?project_id=${p.id}`),this.api('GET',`/api/logs/${p.id}`).catch(()=>[])])},
-    async loadHistoryLogs(){if(this.currentProject)this.historyLogs=await this.api('GET',`/api/logs/${this.currentProject.id}`).catch(()=>[])},
+    async loadFiles(pid){
+      const url = pid!=null ? `/api/files/?project_id=${pid}` : '/api/files/';
+      this.files = await this.api('GET', url);
+    },
+    async deleteFile(id){if(!confirm('确认删除此文件？'))return;await this.api('DELETE',`/api/files/${id}`);await this.loadFiles();this.toast('已删除')},
+    async uploadFile(input){
+      const f=input.files[0]; if(!f)return;
+      const fd=new FormData(); fd.append('file',f);
+      if(this.fileUploadProjectId) fd.append('project_id',this.fileUploadProjectId);
+      const res=await fetch('/api/files/upload',{method:'POST',body:fd});
+      if(!res.ok) throw new Error('上传失败');
+      await this.loadFiles(); this.toast('上传成功');
+    },
+    async openProject(p){
+      // Same project already open — just switch back without resetting state or WS
+      if(this.currentProject && this.currentProject.id===p.id){
+        this.page='project-detail'
+        if(!this.historyLogs.length)
+          this.historyLogs=await this.api('GET',`/api/logs/${p.id}`).catch(()=>[])
+        return
+      }
+      // Different project — close any active WS first
+      if(this.wsConn){this.wsConn.close();this.wsConn=null}
+      this.currentProject=p;this.page='project-detail';this.liveEntries=[];this.liveExpanded=true;this.historyLogs=[];this.historyExpanded={};this.runTask=p.description||'';this.closePanel();
+      [this.projectVulns,this.historyLogs]=await Promise.all([this.api('GET',`/api/vulns/?project_id=${p.id}`),this.api('GET',`/api/logs/${p.id}`).catch(()=>[])])
+    },
+    async loadHistoryLogs(){if(this.currentProject){this.historyLogs=await this.api('GET',`/api/logs/${this.currentProject.id}`).catch(()=>[])}},
     async saveProject(){try{if(this.editItem)await this.api('PATCH',`/api/projects/${this.editItem.id}`,this.projectForm);else await this.api('POST','/api/projects/',{...this.projectForm,agent_id:this.projectForm.agent_id||null});await this.loadProjects();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editProject(p){this.editItem=p;this.projectForm={name:p.name,target:p.target,description:p.description,mode:p.mode,agent_id:p.agent_id||''};this.openPanel('projectForm')},
     async deleteProject(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/projects/${id}`);await this.loadProjects();this.toast('已删除')},
 
     runAgent(){
       if(!this.currentProject)return
-      this.agentLogs=[{type:'info',content:'正在连接...'}]
+      this.liveEntries=[{type:'info',content:'正在连接...'}]
+      this.liveExpanded=true
+      if(this.wsConn){this.wsConn.close();this.wsConn=null}
       const ws=new WebSocket(`ws://localhost:8888/ws/run/${this.currentProject.id}`)
       this.wsConn=ws
-      ws.onopen=()=>ws.send(JSON.stringify({task:this.runTask,extra:''}))
-      ws.onmessage=(e)=>{const d=JSON.parse(e.data);this.agentLogs.push(d);if(d.type==='done'){this.currentProject.status='completed';this.loadProjectVulns();this.loadHistoryLogs()}if(d.type==='error')this.currentProject.status='idle';this.$nextTick(()=>{const b=document.getElementById('logBox');if(b)b.scrollTop=b.scrollHeight})}
+      ws.onopen=()=>ws.send(JSON.stringify({task:this.runTask,extra:'',supplement:this.supplementText||''}))
+      ws.onmessage=(e)=>{
+        if(ws!==this.wsConn)return  // stale WS guard
+        const d=JSON.parse(e.data)
+        if(d.type==='tokens'){this.runTokens={prompt:d.prompt,completion:d.completion,total:d.total};return}
+        this.liveEntries.push(d)
+        if(d.type==='done'){this.currentProject.status='completed';this.supplementText='';this.runTokens={prompt:0,completion:0,total:0};this.loadProjectVulns();this.loadHistoryLogs().then(()=>{this.liveEntries=[]})}
+        if(d.type==='error'){this.currentProject.status='idle';this.runTokens={prompt:0,completion:0,total:0};this.loadHistoryLogs().then(()=>{this.liveEntries=[]})}
+        this.$nextTick(()=>{const b=document.getElementById('logBox');if(b)b.scrollTop=b.scrollHeight})
+      }
       ws.onclose=()=>{if(this.currentProject&&this.currentProject.status==='running')this.currentProject.status='idle'}
       this.currentProject.status='running'
     },
@@ -901,12 +1138,26 @@ function app() {
       if(this.wsConn){this.wsConn.close();this.wsConn=null}
       if(this.currentProject)this.api('PATCH',`/api/projects/${this.currentProject.id}`,{status:'paused'})
     },
-    restartAgent(){
-      if(this.wsConn){this.wsConn.close();this.wsConn=null}
-      this.agentLogs=[]
+    async terminateAgent(){
       if(!this.currentProject)return
-      this.api('PATCH',`/api/projects/${this.currentProject.id}`,{status:'idle'})
-        .then(()=>{this.currentProject.status='idle';this.runAgent()})
+      if(this.wsConn){this.wsConn.close();this.wsConn=null}
+      await this.api('POST',`/api/projects/${this.currentProject.id}/terminate`)
+      this.currentProject.status='idle'
+      this.liveEntries=[]
+      this.runTokens={prompt:0,completion:0,total:0}
+      this.toast('已强制终止')
+    },
+    restartAgent(){
+      if(!this.currentProject)return
+      if(this.wsConn){this.wsConn.close();this.wsConn=null}
+      this.liveEntries=[]
+      // 先调用 terminate 确保旧线程停止，再重新运行
+      this.api('POST',`/api/projects/${this.currentProject.id}/terminate`)
+        .then(()=>{
+          this.currentProject.status='idle'
+          this.supplementText=''
+          this.runAgent()
+        })
     },
     async loadProjectVulns(){this.projectVulns=await this.api('GET',`/api/vulns/?project_id=${this.currentProject.id}`)},
 
@@ -921,12 +1172,32 @@ function app() {
     editMCP(m){this.editItem=m;this.mcpForm={name:m.name,description:m.description,command:m.command,args_json:m.args_json,env_json:m.env_json,enabled:m.enabled};this.openPanel('mcpForm')},
     async toggleMCP(m){await this.api('PATCH',`/api/mcps/${m.id}`,{enabled:!m.enabled});m.enabled=!m.enabled},
     async deleteMCP(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/mcps/${id}`);await this.loadMCPs();this.toast('已删除')},
+    async testMCP(m){
+      m._testing=true;m._testResult='';m._testOk=false;m._testTools=null
+      try{
+        const r=await this.api('POST',`/api/mcps/${m.id}/test`)
+        m._testOk=r.ok
+        if(r.ok){m._testTools=r.tools;m._testResult=`已连接 · ${r.tools.length} 个工具`}
+        else{m._testResult=r.error||'连接失败'}
+      }catch(e){m._testOk=false;m._testResult='请求失败: '+e.message}
+      m._testing=false
+    },
 
     async loadTools(){this.tools=await this.api('GET','/api/tools/')},
     async saveTool(){try{if(this.editItem)await this.api('PATCH',`/api/tools/${this.editItem.id}`,this.toolForm);else await this.api('POST','/api/tools/',this.toolForm);await this.loadTools();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editTool(t){this.editItem=t;this.toolForm={name:t.name,description:t.description,code:t.code,enabled:t.enabled};this.openPanel('toolForm')},
     async toggleTool(t){await this.api('PATCH',`/api/tools/${t.id}`,{enabled:!t.enabled});t.enabled=!t.enabled},
     async deleteTool(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/tools/${id}`);await this.loadTools();this.toast('已删除')},
+    async runToolTest(t){
+      t._testing=true;t._testResult='';t._testOk=false;t._testError=''
+      try{
+        const r=await this.api('POST',`/api/tools/${t.id}/test`)
+        t._testOk=r.ok
+        if(r.ok){t._testResult=r.result||'(无返回)'}
+        else{t._testError=r.error||'调用失败';t._testResult='err'}
+      }catch(e){t._testOk=false;t._testError='请求失败: '+e.message;t._testResult='err'}
+      t._testing=false
+    },
 
     async loadAgents(){this.agents=await this.api('GET','/api/agents/')},
     async saveAgent(){try{if(this.editItem)await this.api('PATCH',`/api/agents/${this.editItem.id}`,this.agentForm);else await this.api('POST','/api/agents/',this.agentForm);await this.loadAgents();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
@@ -938,8 +1209,8 @@ function app() {
     editSkill(s){this.editItem=s;this.skillForm={name:s.name,description:s.description,content:s.content,tags_json:s.tags_json};this.skillTagsRaw=this.parseTags(s.tags_json).join(', ');this.openPanel('skillForm')},
     async deleteSkill(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/skills/${id}`);await this.loadSkills();this.toast('已删除')},
 
-    async loadSettings(){const s=await this.api('GET','/api/settings/');this.settingsForm={provider:s.provider||'anthropic',model:s.model||'',api_key:'',base_url:s.base_url||''};if(s.theme==='dark'){this.darkMode=true;document.documentElement.classList.add('dark')}},
-    async saveSettings(){try{await this.api('PATCH','/api/settings/',{provider:this.settingsForm.provider,model:this.settingsForm.model,base_url:this.settingsForm.base_url,theme:this.darkMode?'dark':'light'});if(this.settingsForm.api_key){await fetch(`/api/settings/api-key?api_key=${encodeURIComponent(this.settingsForm.api_key)}`,{method:'POST'});this.settingsForm.api_key=''}this.toast('设置已保存')}catch(e){this.toast(e.message,'error')}},
+    async loadSettings(){const s=await this.api('GET','/api/settings/');this.settingsForm={provider:s.provider||'anthropic',model:s.model||'',api_key:'',base_url:s.base_url||'',max_iterations:s.max_iterations||'100',tool_result_max_chars:s.tool_result_max_chars||'8000',page_source_max_chars:s.page_source_max_chars||'5000',context_compress_enabled:(s.context_compress_enabled||'false')==='true',context_compress_every_n:s.context_compress_every_n||'30'};if(s.theme==='dark'){this.darkMode=true;document.documentElement.classList.add('dark')}},
+    async saveSettings(){try{await this.api('PATCH','/api/settings/',{provider:this.settingsForm.provider,model:this.settingsForm.model,base_url:this.settingsForm.base_url,theme:this.darkMode?'dark':'light',max_iterations:String(this.settingsForm.max_iterations||100),tool_result_max_chars:String(this.settingsForm.tool_result_max_chars||8000),page_source_max_chars:String(this.settingsForm.page_source_max_chars||5000),context_compress_enabled:this.settingsForm.context_compress_enabled?'true':'false',context_compress_every_n:String(this.settingsForm.context_compress_every_n||30)});if(this.settingsForm.api_key){await fetch(`/api/settings/api-key?api_key=${encodeURIComponent(this.settingsForm.api_key)}`,{method:'POST'});this.settingsForm.api_key=''}this.toast('设置已保存')}catch(e){this.toast(e.message,'error')}},
   }
 }
 </script>

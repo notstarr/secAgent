@@ -44,6 +44,7 @@ _pw: Optional[Playwright] = None
 _browser: Optional[Browser] = None
 _context: Optional[BrowserContext] = None
 _page: Optional[Page] = None
+_dialogs: list[dict] = []  # captured dialog events (alert/confirm/prompt)
 
 
 async def _ensure_page() -> Page:
@@ -92,6 +93,19 @@ async def browser_launch(
         ),
     )
     _page = await _context.new_page()
+
+    # Auto-accept dialogs but record them so the LLM can check for XSS alerts
+    async def _on_dialog(dialog) -> None:
+        _dialogs.append({
+            "type": dialog.type,
+            "message": dialog.message,
+            "default_value": dialog.default_value,
+        })
+        await dialog.accept()
+
+    _page.on("dialog", _on_dialog)
+    _dialogs.clear()
+
     version = _browser.version
     return json.dumps({"status": "launched", "version": version, "headless": headless})
 
@@ -139,6 +153,25 @@ async def browser_screenshot(full_page: bool = False) -> str:
             "format": "png",
         }
     )
+
+
+@mcp.tool()
+async def browser_get_dialogs(clear: bool = True) -> str:
+    """Return all JavaScript dialogs (alert/confirm/prompt) that fired since the last call.
+
+    This is the primary way to detect successful XSS that uses alert() or confirm().
+    Each dialog entry contains: type, message, default_value.
+
+    Args:
+        clear: Clear the captured list after returning. Default True.
+
+    Returns:
+        JSON list of dialog objects. Empty list means no dialogs fired.
+    """
+    result = list(_dialogs)
+    if clear:
+        _dialogs.clear()
+    return json.dumps({"dialogs": result, "count": len(result)})
 
 
 @mcp.tool()

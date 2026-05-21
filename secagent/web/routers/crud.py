@@ -1,6 +1,8 @@
 """Tools / Agents / Skills / Settings routers."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Any, Optional
+
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from secagent.web.database import get_db
@@ -58,6 +60,39 @@ def delete_tool(tid: int, db: Session = Depends(get_db)):
         raise HTTPException(404)
     db.delete(t)
     db.commit()
+    return {"ok": True}
+
+
+@tools_router.post("/{tid}/test")
+def test_tool(tid: int, db: Session = Depends(get_db), body: Optional[dict[str, Any]] = Body(default=None)):
+    """Call a built-in tool with provided kwargs and return the result."""
+    from secagent.tools.network_tools import dns_lookup, port_scan, whois_lookup
+    from secagent.tools.web_tools import (
+        fetch_http_headers, http_request, detect_waf, crawl_links, check_common_vulns
+    )
+    from secagent.tools.pentest_tools import (
+        scan_xss, scan_sqli, scan_ssrf, fuzz_paths, extract_js_endpoints, test_idor
+    )
+    _ALL = {
+        "dns_lookup": dns_lookup, "port_scan": port_scan, "whois_lookup": whois_lookup,
+        "fetch_http_headers": fetch_http_headers, "http_request": http_request,
+        "detect_waf": detect_waf, "crawl_links": crawl_links,
+        "check_common_vulns": check_common_vulns,
+        "scan_xss": scan_xss, "scan_sqli": scan_sqli, "scan_ssrf": scan_ssrf,
+        "fuzz_paths": fuzz_paths, "extract_js_endpoints": extract_js_endpoints,
+        "test_idor": test_idor,
+    }
+    t = db.get(ToolDef, tid)
+    if not t:
+        raise HTTPException(404)
+    fn = _ALL.get(t.name)
+    if fn is None:
+        return {"ok": False, "error": f"工具函数 '{t.name}' 未在内置列表中，无法直接测试"}
+    try:
+        result = fn(**(body or {}))
+        return {"ok": True, "result": str(result)[:3000]}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
     return {"ok": True}
 
 

@@ -214,3 +214,9 @@ class SettingUpdate(BaseModel):
     model: Optional[str] = None
     api_key: Optional[str] = None
     base_url: Optional[str] = None
+    max_iterations: Optional[str] = None
+    # Context management
+    tool_result_max_chars: Optional[str] = None
+    page_source_max_chars: Optional[str] = None
+    context_compress_enabled: Optional[str] = None  # "true" / "false"
+    context_compress_every_n: Optional[str] = None
