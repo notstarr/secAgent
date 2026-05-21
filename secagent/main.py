@@ -79,6 +79,35 @@ def assess(target: str, mode: str, model: str | None, verbose: bool) -> None:
 
 
 @cli.command()
+@click.argument("target")
+@click.option("--scope", default="full", help="Test scope description")
+@click.option("--extra", default="", help="Extra instructions appended to the task")
+@click.option("--output", "-o", default="", help="Save report to this file path")
+@click.option("--model", default=None, help="Override the Claude model to use")
+@click.option("-v", "--verbose", is_flag=True, default=True)
+def sigma(
+    target: str,
+    scope: str,
+    extra: str,
+    output: str,
+    model: str | None,
+    verbose: bool,
+) -> None:
+    """Run sigmaAI single-agent pentest against TARGET (单智能体渗透测试)."""
+    from secagent.agents.sigma_agent import SigmaAgent
+
+    cfg = AgentConfig()
+    if model:
+        cfg.model = model
+    agent = SigmaAgent(config=cfg)
+    report = agent.run(target=target, scope=scope, extra_instructions=extra, verbose=verbose)
+    if output:
+        agent.save_report(output, report)
+    elif not verbose:
+        console.print(report)
+
+
+@cli.command()
 @click.argument("task")
 @click.option("--headless", is_flag=True, default=False, help="Run Chrome in headless mode")
 @click.option("--model", default=None, help="Override the Claude model to use")
