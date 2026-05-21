@@ -78,5 +78,30 @@ def assess(target: str, mode: str, model: str | None, verbose: bool) -> None:
         orchestrator.run_sequential(target=target, verbose=verbose)
 
 
+@cli.command()
+@click.argument("task")
+@click.option("--headless", is_flag=True, default=False, help="Run Chrome in headless mode")
+@click.option("--model", default=None, help="Override the Claude model to use")
+@click.option("-v", "--verbose", is_flag=True, default=True)
+def browser(task: str, headless: bool, model: str | None, verbose: bool) -> None:
+    """Control Chrome with natural language TASK description."""
+    from secagent.agents.browser_agent import BrowserAgent
+
+    cfg = AgentConfig()
+    if model:
+        cfg.model = model
+    agent = BrowserAgent(config=cfg, headless=headless)
+    result = agent.run(task, verbose=verbose)
+    if not verbose:
+        console.print(result)
+
+
+@cli.command("browser-server")
+def browser_server() -> None:
+    """Start the Browser MCP server (stdio transport)."""
+    from secagent.mcp_servers.browser_server import mcp
+    mcp.run()
+
+
 if __name__ == "__main__":
     cli()

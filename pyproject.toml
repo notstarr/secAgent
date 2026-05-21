@@ -11,6 +11,11 @@ dependencies = [
     "pydantic>=2.0.0",
     "dnspython>=2.6.0",
     "click>=8.1.0",
+    # MCP support
+    "mcp>=1.0.0",
+    "fastmcp>=0.4.0",
+    # Browser control
+    "playwright>=1.45.0",
 ]
 
 [project.optional-dependencies]
