@@ -47,7 +47,12 @@ tailwind.config = {
 .item-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);transform:translateY(-1px);}
 .dark .item-card{background:linear-gradient(135deg,#1e293b 0%,#172032 100%);border:1px solid #334155;box-shadow:0 1px 6px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.2);}
 .dark .item-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.4),0 1px 3px rgba(0,0,0,0.25);}
-.input{@apply w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white dark:bg-slate-700 dark:text-white transition;}
+.input{@apply w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white transition;}
+.dark .input{background-color:#334155;color:#f1f5f9;border-color:#475569;}
+.dark .input:focus{border-color:#60a5fa;}
+.dark .input::placeholder{color:#94a3b8;}
+.dark select.input option{background-color:#1e293b;color:#f1f5f9;}
+.dark select{color-scheme:dark;}
 .btn{@apply px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer;}
 .btn-primary{@apply bg-primary-600 text-white hover:bg-primary-700 shadow-sm;}
 .btn-ghost{@apply text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700;}
@@ -198,7 +203,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
                   <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">任务指令 <span x-show="currentProject.status==='running'" class="text-yellow-500 dark:text-yellow-400">（运行中，不可更改）</span></label>
                   <textarea class="input code h-20 mb-3" x-model="runTask" :disabled="currentProject.status==='running'" placeholder="描述测试任务..."></textarea>
-                  <div class="flex items-center gap-2">
+                  <div class="item-card !p-3 flex items-center gap-2 flex-wrap">
                     <button x-show="currentProject.status !== 'running'"
                       class="btn btn-primary flex items-center gap-2" @click="runAgent()">
                       <i class="fa-solid fa-play"></i>
@@ -213,6 +218,9 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                       class="btn btn-ghost flex items-center gap-2 text-slate-500 dark:text-slate-400" @click="restartAgent()">
                       <i class="fa-solid fa-rotate-right"></i> 重启
                     </button>
+                    <div class="ml-auto text-xs text-slate-400 dark:text-slate-500" x-show="currentProject.status==='running'">
+                      <i class="fa-solid fa-spinner fa-spin mr-1"></i>运行中…
+                    </div>
                   </div>
                 </div>
               </div>
@@ -384,7 +392,10 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="tag px-2 py-0.5" :class="t.enabled?'bg-green-100 text-green-700':'bg-slate-100 text-slate-400'" x-text="t.enabled?'启用':'禁用'"></span>
+                    <div class="relative inline-flex items-center cursor-pointer" @click.stop>
+                      <input type="checkbox" class="sr-only peer" :checked="t.enabled" @change="toggleTool(t)">
+                      <div class="w-9 h-5 bg-slate-200 peer-checked:bg-primary-500 rounded-full peer transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-4 after:h-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                    </div>
                     <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs" @click="editTool(t)"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs text-red-400" @click="deleteTool(t.id)"><i class="fa-solid fa-trash"></i></button>
                   </div>
@@ -914,6 +925,7 @@ function app() {
     async loadTools(){this.tools=await this.api('GET','/api/tools/')},
     async saveTool(){try{if(this.editItem)await this.api('PATCH',`/api/tools/${this.editItem.id}`,this.toolForm);else await this.api('POST','/api/tools/',this.toolForm);await this.loadTools();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editTool(t){this.editItem=t;this.toolForm={name:t.name,description:t.description,code:t.code,enabled:t.enabled};this.openPanel('toolForm')},
+    async toggleTool(t){await this.api('PATCH',`/api/tools/${t.id}`,{enabled:!t.enabled});t.enabled=!t.enabled},
     async deleteTool(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/tools/${id}`);await this.loadTools();this.toast('已删除')},
 
     async loadAgents(){this.agents=await this.api('GET','/api/agents/')},

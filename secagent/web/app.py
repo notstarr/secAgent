@@ -459,6 +459,20 @@ def admin_reseed():
 def on_startup():
     init_db()
     counts = reseed_builtin()   # idempotent — fills gaps if DB already exists
+    # Reset any projects stuck in "running" from a previous crashed server
+    from sqlalchemy.orm import Session as _Session
+    from secagent.web.database import SessionLocal as _SL
+    from secagent.web.models import Project as _Proj
+    _db: _Session = _SL()
+    try:
+        stuck = _db.query(_Proj).filter(_Proj.status == "running").all()
+        for p in stuck:
+            p.status = "idle"
+        if stuck:
+            _db.commit()
+            logger.info("Reset %d stuck 'running' project(s) to 'idle'", len(stuck))
+    finally:
+        _db.close()
     logger.info("secAgent UI ready at http://localhost:8888 | seeded: %s", counts)
 
 
