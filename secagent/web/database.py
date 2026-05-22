@@ -57,14 +57,22 @@ def _seed_defaults() -> None:
     db: Session = SessionLocal()
     try:
         # ── Settings ──────────────────────────────────────────────────────────
-        if not db.query(Setting).filter_by(key="theme").first():
-            db.add_all([
-                Setting(key="theme", value="light"),
-                Setting(key="provider", value="anthropic"),
-                Setting(key="model", value="claude-opus-4-5-20250929"),
-                Setting(key="api_key", value=""),
-                Setting(key="base_url", value=""),
-            ])
+        _DEFAULT_SETTINGS = {
+            "theme": "light",
+            "provider": "anthropic",
+            "model": "claude-opus-4-5-20250929",
+            "api_key": "",
+            "base_url": "",
+            "strategy_guard_enabled": "true",
+            "strategy_repeat_call_limit": "5",
+            "strategy_no_progress_limit": "12",
+            "strategy_browser_cooldown_rounds": "6",
+            "strategy_browser_ratio_limit_pct": "80",
+        }
+        existing_keys = {r.key for r in db.query(Setting).all()}
+        for _k, _v in _DEFAULT_SETTINGS.items():
+            if _k not in existing_keys:
+                db.add(Setting(key=_k, value=_v))
 
         # ── Built-in Agents ───────────────────────────────────────────────────
         if not db.query(AgentModel).first():
@@ -253,10 +261,18 @@ def _seed_defaults() -> None:
                 name="browser-mcp",
                 description="Chrome 浏览器控制 MCP — 提供 16 个 Playwright 浏览器工具，"
                             "支持导航/截图/点击/表单填写/JS 执行/请求拦截等",
-                command="python",
+                command="python3",
                 args_json='["-m", "secagent.mcp_servers.browser_server"]',
                 env_json="{}",
                 enabled=True,
+            ))
+            db.add(MCPServer(
+                name="recon-mcp",
+                description="Recon/扫描 MCP — 提供 httpx、katana、nuclei、ffuf、sqlmap 工具封装",
+                command="python3",
+                args_json='["-m", "secagent.mcp_servers.recon_server"]',
+                env_json="{}",
+                enabled=False,
             ))
 
         db.commit()
@@ -340,10 +356,20 @@ def reseed_builtin() -> dict:
             db.add(MCPServer(
                 name="browser-mcp",
                 description="Chrome 浏览器控制 MCP — 提供 16 个 Playwright 浏览器工具",
-                command="python",
+                command="python3",
                 args_json='["-m", "secagent.mcp_servers.browser_server"]',
                 env_json="{}",
                 enabled=True,
+            ))
+            counts["mcps"] += 1
+        if "recon-mcp" not in existing_mcps:
+            db.add(MCPServer(
+                name="recon-mcp",
+                description="Recon/扫描 MCP — 提供 httpx、katana、nuclei、ffuf、sqlmap 工具封装",
+                command="python3",
+                args_json='["-m", "secagent.mcp_servers.recon_server"]',
+                env_json="{}",
+                enabled=False,
             ))
             counts["mcps"] += 1
 
@@ -351,4 +377,3 @@ def reseed_builtin() -> dict:
     finally:
         db.close()
     return counts
-

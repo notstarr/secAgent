@@ -17,7 +17,10 @@
 - **Artifact 系统**：大工具结果自动转存为 artifact，LLM 通过 `query_execution_result` 分页查询，彻底解决 context 爆炸
 - **Token 统计**：实时显示每次运行消耗的 prompt / completion token
 - **暂停 / 续跑 / 终止**：随时暂停并保存对话快照，可携带补充指令续跑，或强制终止
+- **执行策略保护**：重复调用熔断、无进展触发策略切换、浏览器工具冷却与占比保护，防止空转
 - **上下文管理**：可配置工具结果大小上限、定期 LLM 压缩历史消息
+- **LLM 超时重试**：主循环与摘要压缩支持超时自动重试，提升长任务稳定性
+- **自动漏洞入库**：可从工具结果与最终报告中结构化提取漏洞并自动入库
 - **漏洞管理**：创建、审核、确认/误报漏洞报告
 - **多 Agent / Skill**：可自定义 Agent 与 Skill，支持按项目绑定
 
@@ -36,7 +39,8 @@ secAgent/
 │   │   ├── web_tools.py       # http_request / detect_waf / crawl_links / ...
 │   │   └── pentest_tools.py   # scan_xss / scan_sqli / fuzz_paths / ...
 │   ├── mcp_servers/
-│   │   └── browser_server.py  # 内置 Playwright 浏览器 MCP 服务器
+│   │   ├── browser_server.py  # 内置 Playwright 浏览器 MCP 服务器
+│   │   └── recon_server.py    # recon CLI MCP（httpx/katana/nuclei/ffuf/sqlmap）
 │   ├── prompts/
 │   │   └── sigma_single.py    # 默认渗透测试 System Prompt
 │   └── web/
@@ -99,6 +103,8 @@ uvicorn secagent.web.app:app --port 8888 --reload
 | 最大迭代次数 | Agent 单次运行最大轮数（默认 100） |
 | 工具结果上限 | 超过此大小的结果转为 artifact（默认 8000 字符） |
 | 上下文压缩 | 每 N 轮自动 LLM 压缩历史消息 |
+| 执行策略保护 | 启用后自动限制重复工具调用与浏览器空转 |
+| LLM 超时与重试 | 单次请求超时秒数与重试次数 |
 
 ---
 
@@ -151,6 +157,14 @@ uvicorn secagent.web.app:app --port 8888 --reload
 | 命令 | `python` |
 | 参数（JSON） | `["-m", "secagent.mcp_servers.browser_server"]` |
 
+示例：连接内置 recon CLI MCP：
+
+| 字段 | 值 |
+|------|----|
+| 名称 | `recon-mcp` |
+| 命令 | `python3` |
+| 参数（JSON） | `["-m", "secagent.mcp_servers.recon_server"]` |
+
 ---
 
 ## Artifact 系统
@@ -167,7 +181,9 @@ uvicorn secagent.web.app:app --port 8888 --reload
 }
 ```
 
-LLM 通过内置的 `query_execution_result` 工具按需翻页，彻底避免 context 窗口爆炸。
+LLM 通过运行时注入的 `query_execution_result` 工具按需翻页，彻底避免 context 窗口爆炸。
+
+注：`query_execution_result` 是会话级动态工具，不会显示在“Tool 管理”列表中。
 
 ---
 
@@ -178,6 +194,14 @@ LLM 通过内置的 `query_execution_result` 工具按需翻页，彻底避免 c
 3. **暂停 / 续跑**：随时暂停，对话历史自动保存；续跑时可添加补充指引
 4. **终止**：强制停止所有工具调用与 Agent 线程（红色"终止"按钮）
 5. **漏洞记录**：发现漏洞后记录到漏洞库，支持审核确认 / 标记误报
+
+---
+
+## 自动漏洞入库说明
+
+- 工具层：`check_common_vulns`、`scan_xss`、`scan_sqli`、`scan_ssrf`、`test_idor` 返回结构化结果时，后端会自动提取关键字段写入漏洞库。
+- 报告层：当最终报告采用约定 Markdown 结构（如 `## [HIGH] 标题` + `### 描述/POC/请求包/响应包`）时，也会自动解析并入库。
+- 去重策略：按 `project_id + title + target + vuln_type` 去重，避免重复插入。
 
 ---
 

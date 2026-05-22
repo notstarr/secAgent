@@ -45,6 +45,7 @@ _browser: Optional[Browser] = None
 _context: Optional[BrowserContext] = None
 _page: Optional[Page] = None
 _dialogs: list[dict] = []  # captured dialog events (alert/confirm/prompt)
+_DIALOG_OVERLAY_ID = "__secagent_dialog_overlay__"
 
 
 async def _ensure_page() -> Page:
@@ -134,23 +135,112 @@ async def browser_navigate(url: str, wait_until: str = "domcontentloaded") -> st
 
 
 @mcp.tool()
-async def browser_screenshot(full_page: bool = False) -> str:
+async def browser_screenshot(
+    full_page: bool = False,
+    include_dialog_overlay: bool = True,
+) -> str:
     """Take a screenshot of the current page.
 
     Args:
         full_page: Capture the full scrollable page. Default False (viewport only).
+        include_dialog_overlay: If recent alert/confirm/prompt dialogs were captured,
+            draw a temporary evidence overlay into the screenshot. This does not
+            recreate the native browser chrome, but preserves the dialog message
+            visually in the image. Default True.
 
     Returns:
         JSON with base64-encoded PNG and current URL.
     """
     page = await _ensure_page()
-    png = await page.screenshot(full_page=full_page, type="png")
+    dialogs = list(_dialogs)
+    overlay_applied = False
+    try:
+        if include_dialog_overlay and dialogs:
+            await page.evaluate(
+                """(payload) => {
+                    const overlayId = payload.overlayId;
+                    const existing = document.getElementById(overlayId);
+                    if (existing) existing.remove();
+
+                    const root = document.createElement('div');
+                    root.id = overlayId;
+                    root.style.position = 'fixed';
+                    root.style.top = '24px';
+                    root.style.left = '50%';
+                    root.style.transform = 'translateX(-50%)';
+                    root.style.zIndex = '2147483647';
+                    root.style.maxWidth = 'min(720px, calc(100vw - 48px))';
+                    root.style.minWidth = '360px';
+                    root.style.background = '#ffffff';
+                    root.style.border = '2px solid #111827';
+                    root.style.borderRadius = '14px';
+                    root.style.boxShadow = '0 24px 60px rgba(15, 23, 42, 0.35)';
+                    root.style.fontFamily = 'ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif';
+                    root.style.color = '#111827';
+                    root.style.overflow = 'hidden';
+
+                    const title = document.createElement('div');
+                    title.style.padding = '12px 16px';
+                    title.style.fontWeight = '700';
+                    title.style.fontSize = '14px';
+                    title.style.background = '#f3f4f6';
+                    title.style.borderBottom = '1px solid #d1d5db';
+                    title.textContent = 'secAgent Dialog Evidence';
+                    root.appendChild(title);
+
+                    payload.dialogs.forEach((dialog, index) => {
+                        const block = document.createElement('div');
+                        block.style.padding = '14px 16px';
+                        if (index > 0) block.style.borderTop = '1px solid #e5e7eb';
+
+                        const meta = document.createElement('div');
+                        meta.style.fontSize = '12px';
+                        meta.style.fontWeight = '600';
+                        meta.style.color = '#4b5563';
+                        meta.style.marginBottom = '8px';
+                        meta.textContent = `${dialog.type || 'dialog'} dialog`;
+                        block.appendChild(meta);
+
+                        const body = document.createElement('pre');
+                        body.style.margin = '0';
+                        body.style.whiteSpace = 'pre-wrap';
+                        body.style.wordBreak = 'break-word';
+                        body.style.fontSize = '15px';
+                        body.style.lineHeight = '1.45';
+                        body.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, monospace';
+                        body.textContent = dialog.message || '(empty dialog message)';
+                        block.appendChild(body);
+
+                        root.appendChild(block);
+                    });
+
+                    document.documentElement.appendChild(root);
+                }""",
+                {"overlayId": _DIALOG_OVERLAY_ID, "dialogs": dialogs},
+            )
+            overlay_applied = True
+
+        png = await page.screenshot(full_page=full_page, type="png")
+    finally:
+        if overlay_applied:
+            try:
+                await page.evaluate(
+                    """(overlayId) => {
+                        document.getElementById(overlayId)?.remove();
+                    }""",
+                    _DIALOG_OVERLAY_ID,
+                )
+            except Exception:
+                pass
+
     return json.dumps(
         {
             "url": page.url,
             "title": await page.title(),
             "image_base64": base64.b64encode(png).decode(),
             "format": "png",
+            "dialogs": dialogs,
+            "dialog_overlay_applied": overlay_applied,
         }
     )
 

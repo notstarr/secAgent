@@ -88,10 +88,18 @@ class AgentRunner:
         if self._use_openai_compat:
             logger.info("Using OpenAI-compatible endpoint: %s", cfg.openai_compat_base_url)
             from openai import OpenAI
-            return OpenAI(
-                api_key=cfg.openai_compat_api_key,
-                base_url=cfg.openai_compat_base_url,
-            )
+            client_kwargs = {
+                "api_key": cfg.openai_compat_api_key,
+                "base_url": cfg.openai_compat_base_url,
+            }
+            # Do not inherit HTTP(S)_PROXY from process environment by default.
+            # Some private endpoints are only reachable via direct connection.
+            try:
+                from openai import DefaultHttpxClient
+                client_kwargs["http_client"] = DefaultHttpxClient(trust_env=False)
+            except Exception:
+                pass
+            return OpenAI(**client_kwargs)
         return Anthropic(api_key=cfg.api_key)
 
     # ------------------------------------------------------------------

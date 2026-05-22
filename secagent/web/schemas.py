@@ -220,3 +220,9 @@ class SettingUpdate(BaseModel):
     page_source_max_chars: Optional[str] = None
     context_compress_enabled: Optional[str] = None  # "true" / "false"
     context_compress_every_n: Optional[str] = None
+    # Executor strategy guard
+    strategy_guard_enabled: Optional[str] = None  # "true" / "false"
+    strategy_repeat_call_limit: Optional[str] = None
+    strategy_no_progress_limit: Optional[str] = None
+    strategy_browser_cooldown_rounds: Optional[str] = None
+    strategy_browser_ratio_limit_pct: Optional[str] = None

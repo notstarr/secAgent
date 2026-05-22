@@ -62,6 +62,98 @@ tailwind.config = {
 .scroll-thin::-webkit-scrollbar-track{background:transparent;}
 pre,code{font-family:'Courier New',monospace;font-size:12px;}
 textarea.code{font-family:'Courier New',monospace;font-size:12px;}
+.form-input-elevated{
+  background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+  border:1px solid #cbd5e1;
+  border-radius:14px;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,0.9),0 1px 3px rgba(15,23,42,0.06);
+}
+.form-input-elevated:focus{
+  border-color:#60a5fa;
+  box-shadow:0 0 0 3px rgba(59,130,246,0.18),inset 0 1px 1px rgba(255,255,255,0.9);
+}
+.dark .form-input-elevated{
+  background:linear-gradient(180deg,#1e293b 0%,#0f172a 100%);
+  border-color:#475569;
+  color:#e2e8f0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 1px 3px rgba(0,0,0,0.35);
+}
+.task-editor{
+  min-height:130px;
+  line-height:1.55;
+  resize:vertical;
+}
+.task-inline-editor{
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.85),0 1px 2px rgba(15,23,42,0.06);
+  padding:10px 12px;
+}
+.dark .task-inline-editor{
+  border-color:#475569;
+  background:linear-gradient(180deg,#1e293b 0%,#111827 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 1px 2px rgba(0,0,0,0.35);
+}
+.control-bubble{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid #dbeafe;
+  background:linear-gradient(180deg,#f8fbff 0%,#eef4ff 100%);
+  box-shadow:0 1px 3px rgba(37,99,235,0.12);
+}
+.dark .control-bubble{
+  border-color:#334155;
+  background:linear-gradient(180deg,#1e293b 0%,#172032 100%);
+  box-shadow:0 1px 3px rgba(0,0,0,0.35);
+}
+.icon-pill{
+  width:34px;
+  height:34px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid transparent;
+  transition:all .18s ease;
+}
+.icon-pill:hover{transform:translateY(-1px)}
+.icon-pill:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.icon-pill-start{
+  color:#fff;background:#2563eb;border-color:#1d4ed8;
+}
+.icon-pill-start:hover{background:#1d4ed8}
+.icon-pill-restart{
+  color:#475569;background:#fff;border-color:#cbd5e1;
+}
+.icon-pill-restart:hover{background:#f8fafc;color:#1e293b}
+.dark .icon-pill-restart{
+  color:#cbd5e1;background:#0f172a;border-color:#475569;
+}
+.dark .icon-pill-restart:hover{background:#1e293b;color:#f8fafc}
+.icon-pill-pause{
+  color:#fff;background:#f59e0b;border-color:#d97706;
+}
+.icon-pill-pause:hover{background:#d97706}
+.select-check{
+  width:16px;
+  height:16px;
+  border-radius:5px;
+  border:1.5px solid #94a3b8;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(15,23,42,0.08);
+}
+.select-check:checked{
+  border-color:#2563eb;
+  background-color:#2563eb;
+}
+.dark .select-check{
+  border-color:#64748b;
+  background:#1e293b;
+}
 </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen" x-cloak>
@@ -134,21 +226,40 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- PROJECTS -->
         <div x-show="page==='projects'">
-          <div class="card mb-5 !p-4 flex items-center justify-between">
+          <div class="card mb-5 !p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input class="input pl-9" x-model="search.projects" @keydown.enter.prevent="applySearch('projects')" placeholder="搜索项目名称、目标、描述"/>
+              </div>
+              <button class="btn btn-ghost text-sm" @click="applySearch('projects')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('projects', filteredProjects)">
+                <span x-text="isAllSelected('projects', filteredProjects)?'取消全选':'全选'"></span>
+              </button>
+              <button class="btn btn-ghost text-sm" x-show="selected.projects.length>0" @click="clearSelection('projects')">
+                清空选择 (<span x-text="selected.projects.length"></span>)
+              </button>
+              <button class="btn btn-ghost text-sm text-red-500" x-show="selected.projects.length>0" @click="batchDeleteProjects()">
+                <i class="fa-solid fa-trash mr-1"></i>批量删除
+              </button>
+            </div>
+            <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold text-sm">全部项目</div>
-              <div class="text-xs text-slate-400 mt-0.5" x-text="projects.length + ' 个项目'"></div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredProjects.length + ' / ' + projects.length + ' 个项目'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('projectForm');editItem=null;projectForm={name:'',target:'',description:'',mode:'single',agent_id:''}">
               <i class="fa-solid fa-plus"></i> 新建项目
             </button>
           </div>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            <template x-for="p in projects" :key="p.id">
+            <template x-for="p in filteredProjects" :key="p.id">
               <div class="item-card cursor-pointer" @click="openProject(p)">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
+                    <input x-show="showSelectors.projects" type="checkbox" class="select-check" :checked="isSelected('projects', p.id)" @click.stop @change="toggleSelected('projects', p.id)">
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="p.mode==='single'?'bg-primary-100 dark:bg-primary-900/30':'bg-purple-100 dark:bg-purple-900/30'">
                       <i :class="p.mode==='single'?'fa-solid fa-robot text-primary-600 dark:text-primary-400':'fa-solid fa-sitemap text-purple-600 dark:text-purple-400'" class="text-sm"></i>
                     </div>
@@ -170,7 +281,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
             </template>
-            <div x-show="projects.length===0" class="col-span-3 card text-center py-16 text-slate-400">
+            <div x-show="filteredProjects.length===0" class="col-span-3 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-folder-open text-4xl mb-3 block"></i>暂无项目
             </div>
           </div>
@@ -201,34 +312,53 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                   <span class="tag px-3 py-1" :class="`status-${currentProject.status}`" x-text="{'idle':'空闲','running':'运行中','completed':'已完成','paused':'已暂停'}[currentProject.status]||currentProject.status"></span>
                 </div>
                 <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
-                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">任务指令 <span x-show="currentProject.status==='running'" class="text-yellow-500 dark:text-yellow-400">（运行中，不可更改）</span></label>
-                  <textarea class="input code h-20 mb-3" x-model="runTask" :disabled="currentProject.status==='running'" placeholder="描述测试任务..."></textarea>
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">任务指令 <span x-show="currentProject.status==='running'" class="text-yellow-500 dark:text-yellow-400">（运行中，不可更改）</span></label>
+                    <button
+                      class="btn btn-ghost text-xs"
+                      :disabled="currentProject.status==='running'"
+                      @click="runTaskEditing ? saveRunTask() : startEditRunTask()"
+                    >
+                      <i class="fa-solid mr-1" :class="runTaskEditing ? 'fa-floppy-disk' : 'fa-pen'"></i>
+                      <span x-text="runTaskEditing ? '保存' : '编辑'"></span>
+                    </button>
+                  </div>
+                  <div class="mb-3">
+                    <div x-show="!runTaskEditing" class="text-sm text-slate-500 dark:text-slate-300 mt-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 truncate" :title="runTask || '未设置任务指令'" x-text="runTask || '未设置任务指令'"></div>
+                    <div x-show="runTaskEditing" class="task-inline-editor mt-1">
+                      <textarea
+                        class="w-full bg-transparent border-0 outline-none focus:ring-0 code text-sm leading-6 min-h-[110px] resize-y"
+                        x-model="runTaskDraft"
+                        placeholder="描述测试任务、范围、优先级、禁止操作项..."
+                      ></textarea>
+                    </div>
+                  </div>
                   <!-- 暂停后补充指引区域 -->
                   <div x-show="currentProject.status==='paused'" class="mb-3 p-3 rounded-lg border border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20">
                     <label class="block text-xs font-medium text-orange-600 dark:text-orange-400 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>续跑补充信息（可选）</label>
-                    <textarea class="input code h-16" x-model="supplementText" placeholder="如：重点关注 /admin 路径，尝试绕过认证..."></textarea>
+                    <textarea class="input form-input-elevated code h-20" x-model="supplementText" placeholder="如：重点关注 /admin 路径，尝试绕过认证，优先验证高危漏洞..."></textarea>
                     <p class="text-xs text-slate-400 mt-1">点击"继续执行"后，此内容将作为补充指引注入对话历史</p>
                   </div>
                   <div class="item-card !p-3 flex items-center gap-2 flex-wrap">
-                    <button x-show="currentProject.status !== 'running'"
-                      class="btn btn-primary flex items-center gap-2" @click="runAgent()">
-                      <i class="fa-solid fa-play"></i>
-                      <span x-text="currentProject.status==='paused'?'继续执行':'启动 Agent'"></span>
-                    </button>
-                    <button x-show="currentProject.status === 'running'"
-                      class="btn flex items-center gap-2" style="background:#f59e0b;color:white;" @click="pauseAgent()"
-                      onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
-                      <i class="fa-solid fa-pause"></i> 暂停
-                    </button>
-                    <button x-show="currentProject.status === 'running' || currentProject.status === 'paused'"
-                      class="btn flex items-center gap-2" style="background:#ef4444;color:white;" @click="terminateAgent()"
-                      onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'"
-                      :title="'强制终止并清除快照'">
-                      <i class="fa-solid fa-stop"></i> 终止
+                    <button
+                      class="icon-pill"
+                      :class="currentProject.status==='running' ? 'icon-pill-pause' : 'icon-pill-start'"
+                      @click="currentProject.status==='running' ? pauseAgent() : runAgent()"
+                      :title="currentProject.status==='running' ? '暂停' : (currentProject.status==='paused'?'继续执行':'启动 Agent')">
+                      <i class="fa-solid" :class="currentProject.status==='running' ? 'fa-pause' : 'fa-play'"></i>
                     </button>
                     <button x-show="currentProject.status !== 'idle'"
-                      class="btn btn-ghost flex items-center gap-2 text-slate-500 dark:text-slate-400" @click="restartAgent()">
-                      <i class="fa-solid fa-rotate-right"></i> 重启
+                      class="icon-pill icon-pill-restart"
+                      @click="restartAgent()"
+                      title="重启">
+                      <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                    <button x-show="currentProject.status === 'running' || currentProject.status === 'paused'"
+                      class="icon-pill"
+                      style="color:#fff;background:#ef4444;border-color:#dc2626;"
+                      @click="terminateAgent()"
+                      :title="'强制终止并清除快照'">
+                      <i class="fa-solid fa-stop"></i>
                     </button>
                     <div class="ml-auto text-xs text-slate-400 dark:text-slate-500" x-show="currentProject.status==='running'">
                       <i class="fa-solid fa-spinner fa-spin mr-1"></i>运行中…
@@ -243,10 +373,14 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     <h3 class="font-semibold text-sm">运行记录</h3>
                     <span x-show="currentProject.status==='running'" class="flex items-center gap-1 text-xs text-yellow-500"><i class="fa-solid fa-spinner fa-spin text-xs"></i>运行中</span>
                   </div>
-                  <button class="btn btn-ghost text-xs" @click="loadHistoryLogs()"><i class="fa-solid fa-rotate-right mr-1"></i>刷新</button>
+                  <div class="flex items-center gap-1">
+                    <button class="btn btn-ghost text-xs" @click="logsCollapsed=!logsCollapsed"><i class="fa-solid fa-compress mr-1"></i><span x-text="logsCollapsed?'已折叠':'折叠运行记录'"></span></button>
+                    <button class="btn btn-ghost text-xs text-red-500" @click="deleteAllLogs()"><i class="fa-solid fa-trash mr-1"></i>删除全部</button>
+                    <button class="btn btn-ghost text-xs" @click="loadHistoryLogs()"><i class="fa-solid fa-rotate-right mr-1"></i>刷新</button>
+                  </div>
                 </div>
                 <!-- 当前运行条（仅运行中或有live条目时显示） -->
-                <div x-show="liveEntries.length>0" class="item-card overflow-hidden !p-0 mb-2">
+                <div x-show="!logsCollapsed && liveEntries.length>0" class="item-card overflow-hidden !p-0 mb-2">
                   <div class="w-full flex items-center justify-between px-3 py-2 text-xs bg-yellow-50 dark:bg-yellow-900/20">
                     <span class="text-yellow-600 dark:text-yellow-400 font-medium flex items-center gap-1"><i class="fa-solid fa-circle-dot fa-xs"></i> 当前运行</span>
                     <div class="flex items-center gap-2">
@@ -268,8 +402,9 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                   </div>
                 </div>
                 <!-- 历史记录列表 -->
-                <div x-show="historyLogs.length===0 && liveEntries.length===0" class="text-center py-6 text-slate-400 text-sm">暂无运行记录</div>
-                <div class="space-y-2">
+                <div x-show="!logsCollapsed && historyLogs.length===0 && liveEntries.length===0" class="text-center py-6 text-slate-400 text-sm">暂无运行记录</div>
+                <div x-show="logsCollapsed" class="text-center py-6 text-slate-400 text-sm">运行记录已折叠</div>
+                <div class="space-y-2" x-show="!logsCollapsed">
                   <template x-for="log in historyLogs" :key="log.id">
                     <div class="item-card overflow-hidden !p-0">
                       <button class="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -280,6 +415,11 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                           <i class="fa-solid text-slate-400" :class="historyExpanded[log.id]?'fa-chevron-up':'fa-chevron-down'"></i>
                         </div>
                       </button>
+                      <div class="px-3 py-1.5 flex justify-end border-t border-slate-100 dark:border-slate-700">
+                        <button class="btn btn-ghost text-xs text-red-500 !px-2 !py-1" @click="deleteLogItem(log.id)">
+                          <i class="fa-solid fa-trash mr-1"></i>删除记录
+                        </button>
+                      </div>
                       <div x-show="historyExpanded[log.id]" class="bg-slate-900 p-3 font-mono text-xs space-y-1 max-h-64 overflow-y-auto scroll-thin">
                         <template x-for="(entry,ei) in (log.entries||[])" :key="ei">
                           <div :class="entry.type==='think'?'text-purple-300':entry.type==='tool'?'text-yellow-300':entry.type==='tool_result'?'text-blue-300':entry.type==='error'?'text-red-400':'text-cyan-300'">
@@ -293,10 +433,41 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
               <div class="card">
-                <h3 class="font-semibold text-sm mb-4">项目漏洞 (<span x-text="projectVulns.length"></span>)</h3>
+              <div class="flex flex-wrap items-center gap-3 mb-4">
+                  <h3 class="font-semibold text-sm">项目漏洞 (<span x-text="filteredProjectVulns.length"></span>)</h3>
+                  <div class="flex-1 min-w-[220px] relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input class="input pl-9" x-model="search.projectVulns" @keydown.enter.prevent="applySearch('projectVulns')" placeholder="搜索项目漏洞"/>
+                  </div>
+                  <button class="btn btn-ghost text-sm" @click="applySearch('projectVulns')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+                  <button class="btn btn-ghost text-sm" @click="toggleSelectAll('vulns', filteredProjectVulns)">
+                    <span x-text="isAllSelected('vulns', filteredProjectVulns)?'取消全选':'全选'"></span>
+                  </button>
+                  <button class="btn btn-ghost text-sm" x-show="selected.vulns.length>0" @click="clearSelection('vulns')">
+                    清空选择 (<span x-text="selected.vulns.length"></span>)
+                  </button>
+                  <select class="input w-36" x-show="selected.vulns.length>0" x-model="batchSeverity">
+                    <option value="">批量改等级</option>
+                    <option value="critical">critical</option>
+                    <option value="high">high</option>
+                    <option value="medium">medium</option>
+                    <option value="low">low</option>
+                    <option value="info">info</option>
+                  </select>
+                  <button class="btn btn-ghost text-sm" x-show="selected.vulns.length>0 && batchSeverity" @click="batchUpdateVulnSeverity()">
+                    应用等级
+                  </button>
+                  <button class="btn btn-ghost text-sm" x-show="selected.vulns.length>0" @click="batchReviewVulns('confirmed')">
+                    批量确认
+                  </button>
+                  <button class="btn btn-ghost text-sm text-red-500" x-show="selected.vulns.length>0" @click="batchDeleteVulns()">
+                    批量删除
+                  </button>
+                </div>
                 <div class="space-y-2">
-                  <template x-for="v in projectVulns" :key="v.id">
+                  <template x-for="v in filteredProjectVulns" :key="v.id">
                     <div class="item-card flex items-center gap-3 cursor-pointer" @click="openVuln(v)">
+                      <input x-show="showSelectors.vulns" type="checkbox" class="select-check" :checked="isSelected('vulns', v.id)" @click.stop @change="toggleSelected('vulns', v.id)">
                       <span class="tag px-2.5 py-0.5" :class="'badge-'+v.severity" x-text="v.severity.toUpperCase()"></span>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm font-medium truncate" x-text="v.title"></div>
@@ -305,7 +476,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                       <span class="tag px-2.5 py-0.5" :class="'badge-'+v.status" x-text="{'pending':'待审核','confirmed':'已确认','false_positive':'误报'}[v.status]"></span>
                     </div>
                   </template>
-                  <div x-show="projectVulns.length===0" class="text-center py-8 text-slate-400 text-sm">暂无漏洞</div>
+                  <div x-show="filteredProjectVulns.length===0" class="text-center py-8 text-slate-400 text-sm">暂无漏洞</div>
                 </div>
               </div>
             </div>
@@ -316,15 +487,50 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
         <div x-show="page==='vulns'">
           <div class="card mb-5 !p-4">
             <div class="flex flex-wrap items-center gap-3">
-              <select class="input w-40" x-model="vulnFilter.severity" @change="loadVulns()">
+              <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input class="input pl-9" x-model="search.vulns" @keydown.enter.prevent="applySearch('vulns')" placeholder="搜索标题、类型、目标、描述"/>
+              </div>
+              <button class="btn btn-ghost text-sm" @click="applySearch('vulns')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('vulns', filteredVulns)">
+                <span x-text="isAllSelected('vulns', filteredVulns)?'取消全选':'全选'"></span>
+              </button>
+              <select class="input w-40" x-model="vulnFilter.severity">
                 <option value="">所有严重性</option>
                 <option>critical</option><option>high</option><option>medium</option><option>low</option><option>info</option>
               </select>
-              <select class="input w-40" x-model="vulnFilter.status" @change="loadVulns()">
+              <select class="input w-40" x-model="vulnFilter.status">
                 <option value="">所有状态</option>
                 <option value="pending">待审核</option><option value="confirmed">已确认</option><option value="false_positive">误报</option>
               </select>
-              <div class="ml-auto text-xs text-slate-400" x-text="vulns.length + ' 条漏洞'"></div>
+              <select class="input w-44" x-model="vulnFilter.sort">
+                <option value="severity_desc">按严重性排序</option>
+                <option value="severity_asc">按严重性升序</option>
+                <option value="time_desc">按发现时间最新</option>
+                <option value="time_asc">按发现时间最早</option>
+                <option value="title_asc">按标题 A-Z</option>
+              </select>
+              <div class="ml-auto text-xs text-slate-400" x-text="filteredVulns.length + ' / ' + vulns.length + ' 条漏洞'"></div>
+              <button class="btn btn-ghost text-sm" x-show="selected.vulns.length>0" @click="clearSelection('vulns')">
+                清空选择 (<span x-text="selected.vulns.length"></span>)
+              </button>
+              <select class="input w-36" x-show="selected.vulns.length>0" x-model="batchSeverity">
+                <option value="">批量改等级</option>
+                <option value="critical">critical</option>
+                <option value="high">high</option>
+                <option value="medium">medium</option>
+                <option value="low">low</option>
+                <option value="info">info</option>
+              </select>
+              <button class="btn btn-ghost text-sm" x-show="selected.vulns.length>0 && batchSeverity" @click="batchUpdateVulnSeverity()">
+                应用等级
+              </button>
+              <button class="btn btn-ghost text-sm" x-show="selected.vulns.length>0" @click="batchReviewVulns('confirmed')">
+                批量确认
+              </button>
+              <button class="btn btn-ghost text-sm text-red-500" x-show="selected.vulns.length>0" @click="batchDeleteVulns()">
+                <i class="fa-solid fa-trash mr-1"></i>批量删除
+              </button>
               <button class="btn btn-primary flex items-center gap-2"
                 @click="openPanel('vulnForm');editItem=null;vulnForm={project_id:'',title:'',description:'',severity:'medium',vuln_type:'',target:'',poc:'',request_raw:'',response_raw:'',impact:'',recommendation:''}">
                 <i class="fa-solid fa-plus"></i> 新增漏洞
@@ -332,8 +538,9 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
             </div>
           </div>
           <div class="space-y-3">
-            <template x-for="v in vulns" :key="v.id">
+            <template x-for="v in filteredVulns" :key="v.id">
               <div class="item-card flex items-center gap-4 cursor-pointer" @click="openVuln(v)">
+                <input x-show="showSelectors.vulns" type="checkbox" class="select-check" :checked="isSelected('vulns', v.id)" @click.stop @change="toggleSelected('vulns', v.id)">
                 <span class="tag px-2.5 py-1 font-semibold" :class="'badge-'+v.severity" x-text="v.severity.toUpperCase()"></span>
                 <div class="flex-1 min-w-0">
                   <div class="font-semibold text-sm" x-text="v.title"></div>
@@ -345,7 +552,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
             </template>
-            <div x-show="vulns.length===0" class="text-center py-16 text-slate-400">
+            <div x-show="filteredVulns.length===0" class="text-center py-16 text-slate-400">
               <i class="fa-solid fa-bug text-4xl mb-3 block"></i>暂无漏洞
             </div>
           </div>
@@ -353,21 +560,38 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- MCP -->
         <div x-show="page==='mcps'">
-          <div class="card mb-5 !p-4 flex items-center justify-between">
+          <div class="card mb-5 !p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input class="input pl-9" x-model="search.mcps" @keydown.enter.prevent="applySearch('mcps')" placeholder="搜索 MCP 名称、描述、命令"/>
+              </div>
+              <button class="btn btn-ghost text-sm" @click="applySearch('mcps')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('mcps', filteredMcps)">
+                <span x-text="isAllSelected('mcps', filteredMcps)?'取消全选':'全选'"></span>
+              </button>
+              <button class="btn btn-ghost text-sm" x-show="selected.mcps.length>0" @click="batchToggleMCPs(true)">批量启用</button>
+              <button class="btn btn-ghost text-sm" x-show="selected.mcps.length>0" @click="batchToggleMCPs(false)">批量停用</button>
+              <button class="btn btn-ghost text-sm" x-show="selected.mcps.length>0" @click="clearSelection('mcps')">清空选择 (<span x-text="selected.mcps.length"></span>)</button>
+              <button class="btn btn-ghost text-sm text-red-500" x-show="selected.mcps.length>0" @click="batchDeleteMCPs()">批量删除</button>
+            </div>
+            <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold text-sm">MCP 服务器</div>
-              <div class="text-xs text-slate-400 mt-0.5" x-text="mcps.length + ' 个已配置'"></div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredMcps.length + ' / ' + mcps.length + ' 个已配置'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('mcpForm');editItem=null;mcpForm={name:'',description:'',command:'',args_json:'[]',env_json:'{}',enabled:true}">
               <i class="fa-solid fa-plus"></i> 新增 MCP
             </button>
           </div>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <template x-for="m in mcps" :key="m.id">
+            <template x-for="m in filteredMcps" :key="m.id">
               <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
+                    <input x-show="showSelectors.mcps" type="checkbox" class="select-check" :checked="isSelected('mcps', m.id)" @change="toggleSelected('mcps', m.id)">
                     <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"><i class="fa-solid fa-plug text-indigo-600 text-sm"></i></div>
                     <div>
                       <div class="font-semibold text-sm" x-text="m.name"></div>
@@ -404,7 +628,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
             </template>
-            <div x-show="mcps.length===0" class="col-span-2 card text-center py-16 text-slate-400">
+            <div x-show="filteredMcps.length===0" class="col-span-2 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-plug text-4xl mb-3 block"></i>暂无 MCP
             </div>
           </div>
@@ -412,21 +636,38 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- TOOLS -->
         <div x-show="page==='tools'">
-          <div class="card mb-5 !p-4 flex items-center justify-between">
+          <div class="card mb-5 !p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input class="input pl-9" x-model="search.tools" @keydown.enter.prevent="applySearch('tools')" placeholder="搜索 Tool 名称、描述、代码"/>
+              </div>
+              <button class="btn btn-ghost text-sm" @click="applySearch('tools')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('tools', filteredTools)">
+                <span x-text="isAllSelected('tools', filteredTools)?'取消全选':'全选'"></span>
+              </button>
+              <button class="btn btn-ghost text-sm" x-show="selected.tools.length>0" @click="batchToggleTools(true)">批量启用</button>
+              <button class="btn btn-ghost text-sm" x-show="selected.tools.length>0" @click="batchToggleTools(false)">批量停用</button>
+              <button class="btn btn-ghost text-sm" x-show="selected.tools.length>0" @click="clearSelection('tools')">清空选择 (<span x-text="selected.tools.length"></span>)</button>
+              <button class="btn btn-ghost text-sm text-red-500" x-show="selected.tools.length>0" @click="batchDeleteTools()">批量删除</button>
+            </div>
+            <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold text-sm">工具集</div>
-              <div class="text-xs text-slate-400 mt-0.5" x-text="tools.length + ' 个已注册'"></div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredTools.length + ' / ' + tools.length + ' 个已注册'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('toolForm');editItem=null;toolForm={name:'',description:'',code:'',enabled:true}">
               <i class="fa-solid fa-plus"></i> 新增 Tool
             </button>
           </div>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <template x-for="t in tools" :key="t.id">
+            <template x-for="t in filteredTools" :key="t.id">
               <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
+                    <input x-show="showSelectors.tools" type="checkbox" class="select-check" :checked="isSelected('tools', t.id)" @change="toggleSelected('tools', t.id)">
                     <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center"><i class="fa-solid fa-wrench text-green-600 text-sm"></i></div>
                     <div>
                       <div class="font-semibold text-sm" x-text="t.name"></div>
@@ -459,7 +700,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
             </template>
-            <div x-show="tools.length===0" class="col-span-2 card text-center py-16 text-slate-400">
+            <div x-show="filteredTools.length===0" class="col-span-2 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-wrench text-4xl mb-3 block"></i>暂无 Tool
             </div>
           </div>
@@ -467,21 +708,36 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- AGENTS -->
         <div x-show="page==='agents'">
-          <div class="card mb-5 !p-4 flex items-center justify-between">
+          <div class="card mb-5 !p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input class="input pl-9" x-model="search.agents" @keydown.enter.prevent="applySearch('agents')" placeholder="搜索智能体名称、描述、提示词"/>
+              </div>
+              <button class="btn btn-ghost text-sm" @click="applySearch('agents')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('agents', filteredAgents)">
+                <span x-text="isAllSelected('agents', filteredAgents)?'取消全选':'全选'"></span>
+              </button>
+              <button class="btn btn-ghost text-sm" x-show="selected.agents.length>0" @click="clearSelection('agents')">清空选择 (<span x-text="selected.agents.length"></span>)</button>
+              <button class="btn btn-ghost text-sm text-red-500" x-show="selected.agents.length>0" @click="batchDeleteAgents()">批量删除</button>
+            </div>
+            <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold text-sm">智能体列表</div>
-              <div class="text-xs text-slate-400 mt-0.5" x-text="agents.length + ' 个已配置'"></div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredAgents.length + ' / ' + agents.length + ' 个已配置'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('agentForm');editItem=null;agentForm={name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]'}">
               <i class="fa-solid fa-plus"></i> 新增智能体
             </button>
           </div>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <template x-for="a in agents" :key="a.id">
+            <template x-for="a in filteredAgents" :key="a.id">
               <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
+                    <input x-show="showSelectors.agents" type="checkbox" class="select-check" :checked="isSelected('agents', a.id)" @change="toggleSelected('agents', a.id)">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center" :class="a.mode==='single'?'bg-primary-100':'bg-purple-100'">
                       <i :class="a.mode==='single'?'fa-solid fa-robot text-primary-600':'fa-solid fa-sitemap text-purple-600'"></i>
                     </div>
@@ -499,7 +755,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 <div class="text-xs text-slate-400 bg-slate-50 dark:bg-slate-900 rounded-lg p-2 font-mono line-clamp-3" x-text="(a.system_prompt||'').slice(0,200)+'...'"></div>
               </div>
             </template>
-            <div x-show="agents.length===0" class="col-span-2 card text-center py-16 text-slate-400">
+            <div x-show="filteredAgents.length===0" class="col-span-2 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-robot text-4xl mb-3 block"></i>暂无智能体
             </div>
           </div>
@@ -507,21 +763,36 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- SKILLS -->
         <div x-show="page==='skills'">
-          <div class="card mb-5 !p-4 flex items-center justify-between">
+          <div class="card mb-5 !p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input class="input pl-9" x-model="search.skills" @keydown.enter.prevent="applySearch('skills')" placeholder="搜索 Skill 名称、标签、内容"/>
+              </div>
+              <button class="btn btn-ghost text-sm" @click="applySearch('skills')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('skills', filteredSkills)">
+                <span x-text="isAllSelected('skills', filteredSkills)?'取消全选':'全选'"></span>
+              </button>
+              <button class="btn btn-ghost text-sm" x-show="selected.skills.length>0" @click="clearSelection('skills')">清空选择 (<span x-text="selected.skills.length"></span>)</button>
+              <button class="btn btn-ghost text-sm text-red-500" x-show="selected.skills.length>0" @click="batchDeleteSkills()">批量删除</button>
+            </div>
+            <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold text-sm">技能库</div>
-              <div class="text-xs text-slate-400 mt-0.5" x-text="skills.length + ' 个技能'"></div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredSkills.length + ' / ' + skills.length + ' 个技能'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('skillForm');editItem=null;skillForm={name:'',description:'',content:'',tags_json:'[]'};skillTagsRaw=''">
               <i class="fa-solid fa-plus"></i> 新增 Skill
             </button>
           </div>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            <template x-for="s in skills" :key="s.id">
+            <template x-for="s in filteredSkills" :key="s.id">
               <div class="item-card">
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex items-center gap-2">
+                    <input x-show="showSelectors.skills" type="checkbox" class="select-check" :checked="isSelected('skills', s.id)" @change="toggleSelected('skills', s.id)">
                     <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><i class="fa-solid fa-bolt text-amber-600 text-sm"></i></div>
                     <div class="font-semibold text-sm" x-text="s.name"></div>
                   </div>
@@ -538,7 +809,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
             </template>
-            <div x-show="skills.length===0" class="col-span-3 card text-center py-16 text-slate-400">
+            <div x-show="filteredSkills.length===0" class="col-span-3 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-bolt text-4xl mb-3 block"></i>暂无 Skill
             </div>
           </div>
@@ -549,8 +820,16 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           <div class="card mb-5 !p-4 flex flex-wrap items-center gap-3">
             <div class="flex-1 min-w-0">
               <div class="font-semibold text-sm">文件管理</div>
-              <div class="text-xs text-slate-400 mt-0.5" x-text="files.length + ' 个文件'"></div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredFiles.length + ' / ' + files.length + ' 个文件'"></div>
             </div>
+            <div class="flex-1 min-w-[220px] relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input class="input pl-9" x-model="search.files" @keydown.enter.prevent="applySearch('files')" placeholder="搜索文件名、项目名、来源"/>
+            </div>
+            <button class="btn btn-ghost text-sm" @click="applySearch('files')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+            <button class="btn btn-ghost text-sm" @click="toggleSelectAll('files', filteredFiles)">
+              <span x-text="isAllSelected('files', filteredFiles)?'取消全选':'全选'"></span>
+            </button>
             <!-- project filter -->
             <select class="input text-sm w-44" x-model="fileFilterProject"
               @change="loadFiles(fileFilterProject||null)">
@@ -564,13 +843,22 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
               <i class="fa-solid fa-upload"></i> 上传文件
               <input type="file" class="hidden" @change="uploadFile($event.target);$event.target.value=''">
             </label>
+            <button class="btn btn-ghost text-sm" x-show="selected.files.length>0" @click="clearSelection('files')">
+              清空选择 (<span x-text="selected.files.length"></span>)
+            </button>
+            <button class="btn btn-ghost text-sm text-red-500" x-show="selected.files.length>0" @click="batchDeleteFiles()">
+              <i class="fa-solid fa-trash mr-1"></i>批量删除
+            </button>
           </div>
 
           <!-- file grid -->
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-            <template x-for="f in files" :key="f.id">
+            <template x-for="f in filteredFiles" :key="f.id">
               <div class="item-card !p-3 flex flex-col gap-2 group">
                 <!-- thumbnail / icon -->
+                <div class="flex justify-end">
+                  <input x-show="showSelectors.files" type="checkbox" class="select-check" :checked="isSelected('files', f.id)" @change="toggleSelected('files', f.id)">
+                </div>
                 <div class="w-full aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center cursor-pointer"
                   @click="filePreview=f">
                   <template x-if="f.mime_type && f.mime_type.startsWith('image/')">
@@ -596,7 +884,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </div>
               </div>
             </template>
-            <div x-show="files.length===0" class="col-span-6 card text-center py-16 text-slate-400">
+            <div x-show="filteredFiles.length===0" class="col-span-6 card text-center py-16 text-slate-400">
               <i class="fa-solid fa-images text-4xl mb-3 block"></i>暂无文件
             </div>
           </div>
@@ -719,6 +1007,48 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                 </button>
               </div>
             </div>
+            <div class="card">
+              <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fa-solid fa-route text-primary-500"></i> 执行策略保护</h3>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                  <div>
+                    <div class="font-medium text-sm">启用执行器纠偏</div>
+                    <div class="text-xs text-slate-400 mt-0.5">防止模型在 browser/MCP 上长时间空转</div>
+                  </div>
+                  <button class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                    :class="settingsForm.strategy_guard_enabled?'bg-primary-500':'bg-slate-300 dark:bg-slate-600'"
+                    @click="settingsForm.strategy_guard_enabled=!settingsForm.strategy_guard_enabled">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                      :class="settingsForm.strategy_guard_enabled?'translate-x-6':'translate-x-1'"></span>
+                  </button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">重复调用熔断阈值</label>
+                    <input class="input" type="number" min="2" max="30" x-model="settingsForm.strategy_repeat_call_limit" placeholder="5"/>
+                    <p class="text-xs text-slate-400 mt-1">同工具同参数连续超过该值将拒绝继续</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">无进展触发阈值（轮）</label>
+                    <input class="input" type="number" min="3" max="100" x-model="settingsForm.strategy_no_progress_limit" placeholder="12"/>
+                    <p class="text-xs text-slate-400 mt-1">连续无新进展时自动注入策略切换提示</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">浏览器冷却轮数</label>
+                    <input class="input" type="number" min="1" max="50" x-model="settingsForm.strategy_browser_cooldown_rounds" placeholder="6"/>
+                    <p class="text-xs text-slate-400 mt-1">触发后暂时禁止 browser_* 工具调用</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">浏览器调用占比上限（%）</label>
+                    <input class="input" type="number" min="30" max="100" x-model="settingsForm.strategy_browser_ratio_limit_pct" placeholder="80"/>
+                    <p class="text-xs text-slate-400 mt-1">高于该占比会触发临时冷却</p>
+                  </div>
+                </div>
+                <button class="btn btn-primary w-full" @click="saveSettings()">
+                  <i class="fa-solid fa-floppy-disk mr-2"></i>保存策略配置
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -752,15 +1082,15 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
             <div class="space-y-4">
               <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1.5">项目名称 <span class="text-red-400">*</span></label>
-                <input class="input" x-model="projectForm.name" placeholder="我的渗透测试项目"/>
+                <input class="input form-input-elevated" x-model="projectForm.name" placeholder="我的渗透测试项目"/>
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1.5">目标</label>
-                <input class="input" x-model="projectForm.target" placeholder="https://target.example.com"/>
+                <input class="input form-input-elevated" x-model="projectForm.target" placeholder="https://target.example.com"/>
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1.5">任务 <span class="text-slate-400 font-normal text-xs">（将作为智能体的默认指令）</span></label>
-                <textarea class="input h-24" x-model="projectForm.description" placeholder="描述要执行的渗透测试任务，如：寻找 XSS/SQL 注入漏洞..."></textarea>
+                <textarea class="input form-input-elevated task-editor" x-model="projectForm.description" placeholder="描述要执行的渗透测试任务，如：测试认证绕过、XSS/SQLi、敏感信息泄露、只读探测范围..."></textarea>
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1.5">运作模式</label>
@@ -798,6 +1128,19 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                   <span class="tag px-2.5 py-0.5" :class="'badge-'+selectedVuln.status" x-text="{'pending':'待审核','confirmed':'已确认','false_positive':'误报'}[selectedVuln.status]"></span>
                 </div>
                 <div class="text-xs text-slate-400 mt-1" x-text="selectedVuln.vuln_type + ' · ' + selectedVuln.target"></div>
+                <div class="mt-3 flex items-center gap-2">
+                  <label class="text-xs font-medium text-slate-500">人工调整危害评级</label>
+                  <select class="input w-36" x-model="selectedVuln.severity">
+                    <option value="critical">critical</option>
+                    <option value="high">high</option>
+                    <option value="medium">medium</option>
+                    <option value="low">low</option>
+                    <option value="info">info</option>
+                  </select>
+                  <button class="btn btn-ghost text-sm" @click="updateVulnSeverity()">
+                    保存等级
+                  </button>
+                </div>
               </div>
               <div class="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-xl p-1 mb-4">
                 <template x-for="tab in ['描述','POC','请求','响应','截图','审核']" :key="tab">
@@ -1001,11 +1344,18 @@ function app() {
     currentProject:null, projectVulns:[], selectedVuln:null, vulnTab:'描述', reviewNote:'',
     liveEntries:[], liveExpanded:true, runTask:'', wsConn:null,
     historyLogs:[], historyExpanded:{},
+    logsCollapsed:false,
     runTokens:{prompt:0,completion:0,total:0},
     supplementText:'',
+    runTaskEditing:false, runTaskDraft:'',
     mcpTestResults:{}, toolTestResults:{},
     filePreview:null, fileUploadProjectId:'', fileFilterProject:'',
-    vulnFilter:{severity:'',status:''},
+    vulnFilter:{severity:'',status:'',sort:'severity_desc'},
+    search:{projects:'',projectVulns:'',vulns:'',mcps:'',tools:'',agents:'',skills:'',files:''},
+    searchApplied:{projects:'',projectVulns:'',vulns:'',mcps:'',tools:'',agents:'',skills:'',files:''},
+    selected:{projects:[],vulns:[],mcps:[],tools:[],agents:[],skills:[],files:[]},
+    showSelectors:{projects:false,vulns:false,mcps:false,tools:false,agents:false,skills:false,files:false},
+    batchSeverity:'',
 
     projectForm:{name:'',target:'',description:'',mode:'single',agent_id:''},
     vulnForm:{project_id:'',title:'',description:'',severity:'medium',vuln_type:'',target:'',poc:'',request_raw:'',response_raw:'',impact:'',recommendation:''},
@@ -1014,7 +1364,7 @@ function app() {
     agentForm:{name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]'},
     skillForm:{name:'',description:'',content:'',tags_json:'[]'},
     skillTagsRaw:'',
-    settingsForm:{provider:'anthropic',model:'',api_key:'',base_url:'',max_iterations:'100',tool_result_max_chars:'8000',page_source_max_chars:'5000',context_compress_enabled:false,context_compress_every_n:'30'},
+    settingsForm:{provider:'anthropic',model:'',api_key:'',base_url:'',max_iterations:'100',tool_result_max_chars:'8000',page_source_max_chars:'5000',context_compress_enabled:false,context_compress_every_n:'30',strategy_guard_enabled:true,strategy_repeat_call_limit:'5',strategy_no_progress_limit:'12',strategy_browser_cooldown_rounds:'6',strategy_browser_ratio_limit_pct:'80'},
     showKey:false,
 
     get panelTitle() {
@@ -1051,10 +1401,46 @@ function app() {
       }[this.rightPanel] || 'bg-slate-100'
     },
     get currentTitle() {
-      return {projects:'项目',vulns:'漏洞',mcps:'MCP 管理',tools:'Tool 管理',agents:'智能体管理',skills:'Skill 管理',settings:'系统设置','project-detail':this.currentProject?.name||'项目详情'}[this.page]||''
+      return {projects:'项目',vulns:'漏洞',files:'文件管理',mcps:'MCP 管理',tools:'Tool 管理',agents:'智能体管理',skills:'Skill 管理',settings:'系统设置','project-detail':this.currentProject?.name||'项目详情'}[this.page]||''
     },
     get currentSubtitle() {
-      return {projects:'管理渗透测试项目',vulns:'漏洞审核与管理',mcps:'MCP 服务器配置',tools:'工具函数管理',agents:'智能体配置与提示词',skills:'技能库管理',settings:'平台配置','project-detail':'项目详情与任务运行'}[this.page]||''
+      return {projects:'管理渗透测试项目',vulns:'漏洞审核与管理',files:'项目文件与证据管理',mcps:'MCP 服务器配置',tools:'工具函数管理',agents:'智能体配置与提示词',skills:'技能库管理',settings:'平台配置','project-detail':'项目详情与任务运行'}[this.page]||''
+    },
+    get filteredProjects() {
+      return this.filterCollection(this.projects, this.searchApplied.projects, ['name','target','description','status'])
+    },
+    get filteredProjectVulns() {
+      return this.filterCollection(this.projectVulns, this.searchApplied.projectVulns, ['title','vuln_type','target','description'])
+    },
+    get filteredVulns() {
+      const severityRank={critical:5,high:4,medium:3,low:2,info:1}
+      let items=[...this.filterCollection(this.vulns, this.searchApplied.vulns, ['title','vuln_type','target','description','status','severity'])]
+      if(this.vulnFilter.severity) items=items.filter(v=>v.severity===this.vulnFilter.severity)
+      if(this.vulnFilter.status) items=items.filter(v=>v.status===this.vulnFilter.status)
+      const sort=this.vulnFilter.sort||'severity_desc'
+      items.sort((a,b)=>{
+        if(sort==='severity_desc') return (severityRank[b.severity]||0)-(severityRank[a.severity]||0) || new Date(b.discovered_at)-new Date(a.discovered_at)
+        if(sort==='severity_asc') return (severityRank[a.severity]||0)-(severityRank[b.severity]||0) || new Date(b.discovered_at)-new Date(a.discovered_at)
+        if(sort==='time_asc') return new Date(a.discovered_at)-new Date(b.discovered_at)
+        if(sort==='title_asc') return String(a.title||'').localeCompare(String(b.title||''),'zh-CN')
+        return new Date(b.discovered_at)-new Date(a.discovered_at)
+      })
+      return items
+    },
+    get filteredMcps() {
+      return this.filterCollection(this.mcps, this.searchApplied.mcps, ['name','description','command'])
+    },
+    get filteredTools() {
+      return this.filterCollection(this.tools, this.searchApplied.tools, ['name','description','code'])
+    },
+    get filteredAgents() {
+      return this.filterCollection(this.agents, this.searchApplied.agents, ['name','description','mode','system_prompt'])
+    },
+    get filteredSkills() {
+      return this.filterCollection(this.skills, this.searchApplied.skills, ['name','description','content','tags_json'])
+    },
+    get filteredFiles() {
+      return this.filterCollection(this.files, this.searchApplied.files, ['name','project_name','source','mime_type'])
     },
 
     async init() {
@@ -1074,6 +1460,55 @@ function app() {
 
     toast(msg,type='success'){const id=Date.now();this.toasts.push({id,msg,type});setTimeout(()=>this.toasts=this.toasts.filter(t=>t.id!==id),3000)},
     parseTags(j){try{return JSON.parse(j)||[]}catch{return[]}},
+    filterCollection(items, keyword, fields){
+      const q=(keyword||'').trim().toLowerCase()
+      if(!q) return items
+      return items.filter(item=>fields.some(field=>String(item?.[field]||'').toLowerCase().includes(q)))
+    },
+    isSelected(type, id){return (this.selected[type]||[]).includes(id)},
+    isAllSelected(type, items){
+      const ids=(items||[]).map(item=>item.id)
+      return ids.length>0 && ids.every(id=>(this.selected[type]||[]).includes(id))
+    },
+    removeFromSelection(type, id){
+      this.selected[type]=(this.selected[type]||[]).filter(itemId=>itemId!==id)
+    },
+    pruneSelection(type, items){
+      const validIds=new Set((items||[]).map(item=>item.id))
+      this.selected[type]=(this.selected[type]||[]).filter(id=>validIds.has(id))
+      if(!(this.selected[type]||[]).length) this.showSelectors[type]=false
+    },
+    toggleSelected(type, id){
+      const list=[...(this.selected[type]||[])]
+      const idx=list.indexOf(id)
+      if(idx>=0) list.splice(idx,1)
+      else list.push(id)
+      this.selected[type]=list
+    },
+    toggleSelectAll(type, items){
+      const ids=(items||[]).map(item=>item.id)
+      if(!ids.length) return
+      this.showSelectors[type]=true
+      if(this.isAllSelected(type, items)) {
+        this.selected[type]=(this.selected[type]||[]).filter(id=>!ids.includes(id))
+        if(!(this.selected[type]||[]).length) this.showSelectors[type]=false
+      } else {
+        const merged=new Set([...(this.selected[type]||[]), ...ids])
+        this.selected[type]=Array.from(merged)
+      }
+    },
+    applySearch(scope){
+      this.searchApplied[scope]=(this.search[scope]||'').trim()
+    },
+    clearSelection(type){this.selected[type]=[];this.showSelectors[type]=false},
+    async batchDelete(type, ids, deleter, reload){
+      if(!ids.length) return
+      if(!confirm(`确认批量删除已选中的 ${ids.length} 项？`)) return
+      await Promise.all(ids.map(id=>deleter(id)))
+      this.clearSelection(type)
+      await reload()
+      this.toast(`已批量删除 ${ids.length} 项`)
+    },
 
     async api(method,url,body){
       const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined})
@@ -1081,37 +1516,87 @@ function app() {
       return r.json()
     },
 
-    async loadProjects(){this.projects=await this.api('GET','/api/projects/')},
+    async loadProjects(){
+      this.projects=await this.api('GET','/api/projects/')
+      this.pruneSelection('projects', this.projects)
+    },
     async loadFiles(pid){
       const url = pid!=null ? `/api/files/?project_id=${pid}` : '/api/files/';
       this.files = await this.api('GET', url);
+      this.pruneSelection('files', this.files)
     },
-    async deleteFile(id){if(!confirm('确认删除此文件？'))return;await this.api('DELETE',`/api/files/${id}`);await this.loadFiles();this.toast('已删除')},
+    async deleteFile(id){
+      if(!confirm('确认删除此文件？'))return
+      await this.api('DELETE',`/api/files/${id}`)
+      this.removeFromSelection('files', id)
+      await this.loadFiles(this.fileFilterProject||null)
+      this.toast('已删除')
+    },
     async uploadFile(input){
       const f=input.files[0]; if(!f)return;
       const fd=new FormData(); fd.append('file',f);
       if(this.fileUploadProjectId) fd.append('project_id',this.fileUploadProjectId);
       const res=await fetch('/api/files/upload',{method:'POST',body:fd});
       if(!res.ok) throw new Error('上传失败');
-      await this.loadFiles(); this.toast('上传成功');
+      await this.loadFiles(this.fileFilterProject||null); this.toast('上传成功');
     },
     async openProject(p){
       // Same project already open — just switch back without resetting state or WS
       if(this.currentProject && this.currentProject.id===p.id){
+        this.currentProject={...this.currentProject,...p}
         this.page='project-detail'
-        if(!this.historyLogs.length)
-          this.historyLogs=await this.api('GET',`/api/logs/${p.id}`).catch(()=>[])
+        this.logsCollapsed=false
+        this.historyLogs=await this.api('GET',`/api/logs/${p.id}`).catch(()=>[])
+        this.projectVulns=await this.api('GET',`/api/vulns/?project_id=${p.id}`).catch(()=>[])
         return
       }
       // Different project — close any active WS first
       if(this.wsConn){this.wsConn.close();this.wsConn=null}
-      this.currentProject=p;this.page='project-detail';this.liveEntries=[];this.liveExpanded=true;this.historyLogs=[];this.historyExpanded={};this.runTask=p.description||'';this.closePanel();
+      this.currentProject=p;this.page='project-detail';this.liveEntries=[];this.liveExpanded=true;this.historyLogs=[];this.historyExpanded={};this.logsCollapsed=false;this.runTask=p.description||'';this.runTaskEditing=false;this.runTaskDraft=this.runTask;this.closePanel();
       [this.projectVulns,this.historyLogs]=await Promise.all([this.api('GET',`/api/vulns/?project_id=${p.id}`),this.api('GET',`/api/logs/${p.id}`).catch(()=>[])])
     },
     async loadHistoryLogs(){if(this.currentProject){this.historyLogs=await this.api('GET',`/api/logs/${this.currentProject.id}`).catch(()=>[])}},
+    startEditRunTask(){
+      if(!this.currentProject || this.currentProject.status==='running') return
+      this.runTaskDraft=this.runTask||''
+      this.runTaskEditing=true
+    },
+    async saveRunTask(){
+      if(!this.currentProject || this.currentProject.status==='running') return
+      const next=(this.runTaskDraft||'').trim()
+      await this.api('PATCH',`/api/projects/${this.currentProject.id}`,{description:next})
+      this.runTask=next
+      this.currentProject.description=next
+      this.projects=this.projects.map(p=>p.id===this.currentProject.id?{...p,description:next}:p)
+      this.runTaskEditing=false
+      this.toast('任务指令已保存')
+    },
+    async deleteLogItem(logId){
+      if(!confirm('确认删除这条运行记录？')) return
+      await this.api('DELETE', `/api/logs/item/${logId}`)
+      this.historyLogs=this.historyLogs.filter(l=>l.id!==logId)
+      delete this.historyExpanded[logId]
+      this.toast('已删除运行记录')
+    },
+    async deleteAllLogs(){
+      if(!this.currentProject) return
+      if(!confirm('确认删除当前项目全部运行记录？')) return
+      await this.api('DELETE', `/api/logs/${this.currentProject.id}`)
+      this.historyLogs=[]
+      this.historyExpanded={}
+      this.liveEntries=[]
+      this.toast('已删除全部运行记录')
+    },
     async saveProject(){try{if(this.editItem)await this.api('PATCH',`/api/projects/${this.editItem.id}`,this.projectForm);else await this.api('POST','/api/projects/',{...this.projectForm,agent_id:this.projectForm.agent_id||null});await this.loadProjects();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editProject(p){this.editItem=p;this.projectForm={name:p.name,target:p.target,description:p.description,mode:p.mode,agent_id:p.agent_id||''};this.openPanel('projectForm')},
-    async deleteProject(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/projects/${id}`);await this.loadProjects();this.toast('已删除')},
+    async deleteProject(id){
+      if(!confirm('确认删除？'))return
+      await this.api('DELETE',`/api/projects/${id}`)
+      this.removeFromSelection('projects', id)
+      await this.loadProjects()
+      this.toast('已删除')
+    },
+    async batchDeleteProjects(){await this.batchDelete('projects', this.selected.projects, id=>this.api('DELETE',`/api/projects/${id}`), ()=>this.loadProjects())},
 
     runAgent(){
       if(!this.currentProject)return
@@ -1120,7 +1605,7 @@ function app() {
       if(this.wsConn){this.wsConn.close();this.wsConn=null}
       const ws=new WebSocket(`ws://localhost:8888/ws/run/${this.currentProject.id}`)
       this.wsConn=ws
-      ws.onopen=()=>ws.send(JSON.stringify({task:this.runTask,extra:'',supplement:this.supplementText||''}))
+      ws.onopen=()=>ws.send(JSON.stringify({task:this.runTask,extra:this.supplementText||'',supplement:this.supplementText||''}))
       ws.onmessage=(e)=>{
         if(ws!==this.wsConn)return  // stale WS guard
         const d=JSON.parse(e.data)
@@ -1130,7 +1615,14 @@ function app() {
         if(d.type==='error'){this.currentProject.status='idle';this.runTokens={prompt:0,completion:0,total:0};this.loadHistoryLogs().then(()=>{this.liveEntries=[]})}
         this.$nextTick(()=>{const b=document.getElementById('logBox');if(b)b.scrollTop=b.scrollHeight})
       }
-      ws.onclose=()=>{if(this.currentProject&&this.currentProject.status==='running')this.currentProject.status='idle'}
+      ws.onclose=()=>{
+        if(ws!==this.wsConn) return
+        if(this.currentProject&&this.currentProject.status==='running'){
+          this.currentProject.status='idle'
+          this.liveEntries.push({type:'info',content:'WebSocket 连接已关闭，任务可能提前结束。请查看运行记录获取详情。'})
+          this.loadHistoryLogs()
+        }
+      }
       this.currentProject.status='running'
     },
     pauseAgent(){
@@ -1159,19 +1651,82 @@ function app() {
           this.runAgent()
         })
     },
-    async loadProjectVulns(){this.projectVulns=await this.api('GET',`/api/vulns/?project_id=${this.currentProject.id}`)},
+    async loadProjectVulns(){
+      this.projectVulns=await this.api('GET',`/api/vulns/?project_id=${this.currentProject.id}`)
+      this.pruneSelection('vulns', this.projectVulns)
+    },
 
-    async loadVulns(){this.vulns=await this.api('GET','/api/vulns/');this.vulnCount=this.vulns.filter(v=>v.status==='pending').length},
+    async loadVulns(){
+      this.vulns=await this.api('GET','/api/vulns/')
+      this.pruneSelection('vulns', this.vulns)
+      this.vulnCount=this.vulns.filter(v=>v.status==='pending').length
+    },
     openVuln(v){this.selectedVuln=v;this.vulnTab='描述';this.reviewNote=v.review_note||'';this.openPanel('vulnDetail')},
     async saveVuln(){try{await this.api('POST','/api/vulns/',{...this.vulnForm,project_id:parseInt(this.vulnForm.project_id)||null});await this.loadVulns();this.closePanel();this.toast('已添加漏洞')}catch(e){this.toast(e.message,'error')}},
     async reviewVuln(status){try{await this.api('POST',`/api/vulns/${this.selectedVuln.id}/review?status=${status}&note=${encodeURIComponent(this.reviewNote)}`);this.selectedVuln.status=status;this.selectedVuln.review_note=this.reviewNote;await this.loadVulns();this.toast(status==='confirmed'?'漏洞已确认':'已标记为误报')}catch(e){this.toast(e.message,'error')}},
-    async deleteVuln(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/vulns/${id}`);await this.loadVulns();this.toast('已删除')},
+    async deleteVuln(id){
+      if(!confirm('确认删除？'))return
+      await this.api('DELETE',`/api/vulns/${id}`)
+      this.removeFromSelection('vulns', id)
+      await this.loadVulns()
+      if(this.currentProject) await this.loadProjectVulns()
+      this.toast('已删除')
+    },
+    async updateVulnSeverity(){
+      if(!this.selectedVuln)return
+      try{
+        await this.api('PATCH',`/api/vulns/${this.selectedVuln.id}`,{severity:this.selectedVuln.severity})
+        await this.loadVulns()
+        if(this.currentProject) await this.loadProjectVulns()
+        this.toast('漏洞危害评级已更新')
+      }catch(e){this.toast(e.message,'error')}
+    },
+    async batchDeleteVulns(){await this.batchDelete('vulns', this.selected.vulns, id=>this.api('DELETE',`/api/vulns/${id}`), async()=>{await this.loadVulns(); if(this.currentProject) await this.loadProjectVulns()})},
+    async batchReviewVulns(status){
+      if(!this.selected.vulns.length) return
+      try{
+        await Promise.all(this.selected.vulns.map(id=>this.api('POST',`/api/vulns/${id}/review?status=${status}&note=`)))
+        this.clearSelection('vulns')
+        await this.loadVulns()
+        if(this.currentProject) await this.loadProjectVulns()
+        this.toast(`已批量更新 ${status==='confirmed'?'确认':'审核'} 状态`)
+      }catch(e){this.toast(e.message,'error')}
+    },
+    async batchUpdateVulnSeverity(){
+      if(!this.selected.vulns.length || !this.batchSeverity) return
+      try{
+        await Promise.all(this.selected.vulns.map(id=>this.api('PATCH',`/api/vulns/${id}`,{severity:this.batchSeverity})))
+        this.clearSelection('vulns')
+        await this.loadVulns()
+        if(this.currentProject) await this.loadProjectVulns()
+        this.toast(`已批量更新 ${this.batchSeverity} 等级`)
+      }catch(e){this.toast(e.message,'error')}
+    },
 
-    async loadMCPs(){this.mcps=await this.api('GET','/api/mcps/')},
+    async loadMCPs(){
+      this.mcps=await this.api('GET','/api/mcps/')
+      this.pruneSelection('mcps', this.mcps)
+    },
     async saveMCP(){try{if(this.editItem)await this.api('PATCH',`/api/mcps/${this.editItem.id}`,this.mcpForm);else await this.api('POST','/api/mcps/',this.mcpForm);await this.loadMCPs();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editMCP(m){this.editItem=m;this.mcpForm={name:m.name,description:m.description,command:m.command,args_json:m.args_json,env_json:m.env_json,enabled:m.enabled};this.openPanel('mcpForm')},
     async toggleMCP(m){await this.api('PATCH',`/api/mcps/${m.id}`,{enabled:!m.enabled});m.enabled=!m.enabled},
-    async deleteMCP(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/mcps/${id}`);await this.loadMCPs();this.toast('已删除')},
+    async deleteMCP(id){
+      if(!confirm('确认删除？'))return
+      await this.api('DELETE',`/api/mcps/${id}`)
+      this.removeFromSelection('mcps', id)
+      await this.loadMCPs()
+      this.toast('已删除')
+    },
+    async batchToggleMCPs(enabled){
+      if(!this.selected.mcps.length) return
+      try{
+        await Promise.all(this.selected.mcps.map(id=>this.api('PATCH',`/api/mcps/${id}`,{enabled})))
+        this.clearSelection('mcps')
+        await this.loadMCPs()
+        this.toast(`已批量${enabled?'启用':'停用'} MCP`)
+      }catch(e){this.toast(e.message,'error')}
+    },
+    async batchDeleteMCPs(){await this.batchDelete('mcps', this.selected.mcps, id=>this.api('DELETE',`/api/mcps/${id}`), ()=>this.loadMCPs())},
     async testMCP(m){
       m._testing=true;m._testResult='';m._testOk=false;m._testTools=null
       try{
@@ -1183,11 +1738,30 @@ function app() {
       m._testing=false
     },
 
-    async loadTools(){this.tools=await this.api('GET','/api/tools/')},
+    async loadTools(){
+      this.tools=await this.api('GET','/api/tools/')
+      this.pruneSelection('tools', this.tools)
+    },
     async saveTool(){try{if(this.editItem)await this.api('PATCH',`/api/tools/${this.editItem.id}`,this.toolForm);else await this.api('POST','/api/tools/',this.toolForm);await this.loadTools();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editTool(t){this.editItem=t;this.toolForm={name:t.name,description:t.description,code:t.code,enabled:t.enabled};this.openPanel('toolForm')},
     async toggleTool(t){await this.api('PATCH',`/api/tools/${t.id}`,{enabled:!t.enabled});t.enabled=!t.enabled},
-    async deleteTool(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/tools/${id}`);await this.loadTools();this.toast('已删除')},
+    async deleteTool(id){
+      if(!confirm('确认删除？'))return
+      await this.api('DELETE',`/api/tools/${id}`)
+      this.removeFromSelection('tools', id)
+      await this.loadTools()
+      this.toast('已删除')
+    },
+    async batchToggleTools(enabled){
+      if(!this.selected.tools.length) return
+      try{
+        await Promise.all(this.selected.tools.map(id=>this.api('PATCH',`/api/tools/${id}`,{enabled})))
+        this.clearSelection('tools')
+        await this.loadTools()
+        this.toast(`已批量${enabled?'启用':'停用'} Tool`)
+      }catch(e){this.toast(e.message,'error')}
+    },
+    async batchDeleteTools(){await this.batchDelete('tools', this.selected.tools, id=>this.api('DELETE',`/api/tools/${id}`), ()=>this.loadTools())},
     async runToolTest(t){
       t._testing=true;t._testResult='';t._testOk=false;t._testError=''
       try{
@@ -1199,18 +1773,39 @@ function app() {
       t._testing=false
     },
 
-    async loadAgents(){this.agents=await this.api('GET','/api/agents/')},
+    async loadAgents(){
+      this.agents=await this.api('GET','/api/agents/')
+      this.pruneSelection('agents', this.agents)
+    },
     async saveAgent(){try{if(this.editItem)await this.api('PATCH',`/api/agents/${this.editItem.id}`,this.agentForm);else await this.api('POST','/api/agents/',this.agentForm);await this.loadAgents();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editAgent(a){this.editItem=a;this.agentForm={name:a.name,description:a.description,mode:a.mode,system_prompt:a.system_prompt,tools_json:a.tools_json,mcps_json:a.mcps_json};this.openPanel('agentForm')},
-    async deleteAgent(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/agents/${id}`);await this.loadAgents();this.toast('已删除')},
+    async deleteAgent(id){
+      if(!confirm('确认删除？'))return
+      await this.api('DELETE',`/api/agents/${id}`)
+      this.removeFromSelection('agents', id)
+      await this.loadAgents()
+      this.toast('已删除')
+    },
+    async batchDeleteAgents(){await this.batchDelete('agents', this.selected.agents, id=>this.api('DELETE',`/api/agents/${id}`), ()=>this.loadAgents())},
 
-    async loadSkills(){this.skills=await this.api('GET','/api/skills/')},
+    async loadSkills(){
+      this.skills=await this.api('GET','/api/skills/')
+      this.pruneSelection('skills', this.skills)
+    },
     async saveSkill(){try{const tags=this.skillTagsRaw.split(',').map(t=>t.trim()).filter(Boolean);this.skillForm.tags_json=JSON.stringify(tags);if(this.editItem)await this.api('PATCH',`/api/skills/${this.editItem.id}`,this.skillForm);else await this.api('POST','/api/skills/',this.skillForm);await this.loadSkills();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editSkill(s){this.editItem=s;this.skillForm={name:s.name,description:s.description,content:s.content,tags_json:s.tags_json};this.skillTagsRaw=this.parseTags(s.tags_json).join(', ');this.openPanel('skillForm')},
-    async deleteSkill(id){if(!confirm('确认删除？'))return;await this.api('DELETE',`/api/skills/${id}`);await this.loadSkills();this.toast('已删除')},
+    async deleteSkill(id){
+      if(!confirm('确认删除？'))return
+      await this.api('DELETE',`/api/skills/${id}`)
+      this.removeFromSelection('skills', id)
+      await this.loadSkills()
+      this.toast('已删除')
+    },
+    async batchDeleteSkills(){await this.batchDelete('skills', this.selected.skills, id=>this.api('DELETE',`/api/skills/${id}`), ()=>this.loadSkills())},
+    async batchDeleteFiles(){await this.batchDelete('files', this.selected.files, id=>this.api('DELETE',`/api/files/${id}`), ()=>this.loadFiles(this.fileFilterProject||null))},
 
-    async loadSettings(){const s=await this.api('GET','/api/settings/');this.settingsForm={provider:s.provider||'anthropic',model:s.model||'',api_key:'',base_url:s.base_url||'',max_iterations:s.max_iterations||'100',tool_result_max_chars:s.tool_result_max_chars||'8000',page_source_max_chars:s.page_source_max_chars||'5000',context_compress_enabled:(s.context_compress_enabled||'false')==='true',context_compress_every_n:s.context_compress_every_n||'30'};if(s.theme==='dark'){this.darkMode=true;document.documentElement.classList.add('dark')}},
-    async saveSettings(){try{await this.api('PATCH','/api/settings/',{provider:this.settingsForm.provider,model:this.settingsForm.model,base_url:this.settingsForm.base_url,theme:this.darkMode?'dark':'light',max_iterations:String(this.settingsForm.max_iterations||100),tool_result_max_chars:String(this.settingsForm.tool_result_max_chars||8000),page_source_max_chars:String(this.settingsForm.page_source_max_chars||5000),context_compress_enabled:this.settingsForm.context_compress_enabled?'true':'false',context_compress_every_n:String(this.settingsForm.context_compress_every_n||30)});if(this.settingsForm.api_key){await fetch(`/api/settings/api-key?api_key=${encodeURIComponent(this.settingsForm.api_key)}`,{method:'POST'});this.settingsForm.api_key=''}this.toast('设置已保存')}catch(e){this.toast(e.message,'error')}},
+    async loadSettings(){const s=await this.api('GET','/api/settings/');this.settingsForm={provider:s.provider||'anthropic',model:s.model||'',api_key:'',base_url:s.base_url||'',max_iterations:s.max_iterations||'100',tool_result_max_chars:s.tool_result_max_chars||'8000',page_source_max_chars:s.page_source_max_chars||'5000',context_compress_enabled:(s.context_compress_enabled||'false')==='true',context_compress_every_n:s.context_compress_every_n||'30',strategy_guard_enabled:(s.strategy_guard_enabled||'true')==='true',strategy_repeat_call_limit:s.strategy_repeat_call_limit||'5',strategy_no_progress_limit:s.strategy_no_progress_limit||'12',strategy_browser_cooldown_rounds:s.strategy_browser_cooldown_rounds||'6',strategy_browser_ratio_limit_pct:s.strategy_browser_ratio_limit_pct||'80'};if(s.theme==='dark'){this.darkMode=true;document.documentElement.classList.add('dark')}},
+    async saveSettings(){try{await this.api('PATCH','/api/settings/',{provider:this.settingsForm.provider,model:this.settingsForm.model,base_url:this.settingsForm.base_url,theme:this.darkMode?'dark':'light',max_iterations:String(this.settingsForm.max_iterations||100),tool_result_max_chars:String(this.settingsForm.tool_result_max_chars||8000),page_source_max_chars:String(this.settingsForm.page_source_max_chars||5000),context_compress_enabled:this.settingsForm.context_compress_enabled?'true':'false',context_compress_every_n:String(this.settingsForm.context_compress_every_n||30),strategy_guard_enabled:this.settingsForm.strategy_guard_enabled?'true':'false',strategy_repeat_call_limit:String(this.settingsForm.strategy_repeat_call_limit||5),strategy_no_progress_limit:String(this.settingsForm.strategy_no_progress_limit||12),strategy_browser_cooldown_rounds:String(this.settingsForm.strategy_browser_cooldown_rounds||6),strategy_browser_ratio_limit_pct:String(this.settingsForm.strategy_browser_ratio_limit_pct||80)});if(this.settingsForm.api_key){await fetch(`/api/settings/api-key?api_key=${encodeURIComponent(this.settingsForm.api_key)}`,{method:'POST'});this.settingsForm.api_key=''}this.toast('设置已保存')}catch(e){this.toast(e.message,'error')}},
   }
 }
 </script>
