@@ -597,6 +597,178 @@ async def browser_new_tab(url: str = "") -> str:
 
 
 @mcp.tool()
+async def browser_get_interactive_elements() -> str:
+    """Extract all interactive elements from the current page in a compact format.
+
+    Returns buttons, links, inputs, textareas, selects, and other clickable/fillable
+    elements with their CSS selectors, types, labels, and current values.
+    This is much cheaper than browser_get_html for understanding page structure.
+
+    Use this tool instead of browser_get_html when you need to figure out how to
+    interact with a page (e.g. find the login form, find navigation links, etc.).
+
+    Returns:
+        JSON with categorised interactive elements and suggested CSS selectors.
+    """
+    page = await _ensure_page()
+    try:
+        elements = await page.evaluate("""() => {
+            const result = { forms: [], links: [], buttons: [], inputs: [], selects: [], textareas: [], other_clickable: [] };
+
+            // Helper: build a unique CSS selector for an element
+            function getSelector(el) {
+                if (el.id) return '#' + CSS.escape(el.id);
+                if (el.name) {
+                    const tag = el.tagName.toLowerCase();
+                    const sel = tag + '[name="' + el.name.replace(/"/g, '\\\\"') + '"]';
+                    if (document.querySelectorAll(sel).length === 1) return sel;
+                }
+                if (el.getAttribute('data-testid')) return '[data-testid="' + el.getAttribute('data-testid') + '"]';
+                if (el.getAttribute('aria-label')) return '[aria-label="' + el.getAttribute('aria-label').replace(/"/g, '\\\\"') + '"]';
+                // fallback: tag + nth-of-type
+                const tag = el.tagName.toLowerCase();
+                const parent = el.parentElement;
+                if (!parent) return tag;
+                const siblings = Array.from(parent.children).filter(c => c.tagName === el.tagName);
+                if (siblings.length === 1) return tag;
+                const idx = siblings.indexOf(el) + 1;
+                return tag + ':nth-of-type(' + idx + ')';
+            }
+
+            // Helper: get label text for an input
+            function getLabel(el) {
+                // Check for associated <label>
+                if (el.id) {
+                    const label = document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+                    if (label) return label.textContent.trim().substring(0, 80);
+                }
+                // Check parent label
+                const parentLabel = el.closest('label');
+                if (parentLabel) return parentLabel.textContent.trim().substring(0, 80);
+                // Check aria-label
+                if (el.getAttribute('aria-label')) return el.getAttribute('aria-label').substring(0, 80);
+                // Check placeholder
+                if (el.placeholder) return el.placeholder.substring(0, 80);
+                return '';
+            }
+
+            // Forms
+            document.querySelectorAll('form').forEach(form => {
+                result.forms.push({
+                    selector: getSelector(form),
+                    action: form.action || '',
+                    method: form.method || 'get',
+                    id: form.id || '',
+                    name: form.name || ''
+                });
+            });
+
+            // Inputs
+            document.querySelectorAll('input:not([type="hidden"])').forEach(el => {
+                if (!el.offsetParent && el.type !== 'hidden') return; // skip invisible
+                result.inputs.push({
+                    selector: getSelector(el),
+                    type: el.type || 'text',
+                    name: el.name || '',
+                    value: (el.type === 'password' ? '***' : (el.value || '').substring(0, 100)),
+                    placeholder: (el.placeholder || '').substring(0, 80),
+                    label: getLabel(el),
+                    required: el.required,
+                    disabled: el.disabled
+                });
+            });
+
+            // Textareas
+            document.querySelectorAll('textarea').forEach(el => {
+                if (!el.offsetParent) return;
+                result.textareas.push({
+                    selector: getSelector(el),
+                    name: el.name || '',
+                    value: (el.value || '').substring(0, 100),
+                    label: getLabel(el),
+                    placeholder: (el.placeholder || '').substring(0, 80)
+                });
+            });
+
+            // Selects
+            document.querySelectorAll('select').forEach(el => {
+                if (!el.offsetParent) return;
+                const options = Array.from(el.options).slice(0, 10).map(o => ({
+                    value: o.value,
+                    text: o.textContent.trim().substring(0, 60),
+                    selected: o.selected
+                }));
+                result.selects.push({
+                    selector: getSelector(el),
+                    name: el.name || '',
+                    label: getLabel(el),
+                    options: options,
+                    total_options: el.options.length
+                });
+            });
+
+            // Buttons (button tags + input[type=submit/button/reset])
+            document.querySelectorAll('button, input[type="submit"], input[type="button"], input[type="reset"]').forEach(el => {
+                if (!el.offsetParent) return;
+                result.buttons.push({
+                    selector: getSelector(el),
+                    text: (el.textContent || el.value || '').trim().substring(0, 80),
+                    type: el.type || '',
+                    disabled: el.disabled
+                });
+            });
+
+            // Links (only visible, with href)
+            document.querySelectorAll('a[href]').forEach(el => {
+                if (!el.offsetParent) return;
+                const text = el.textContent.trim().substring(0, 80);
+                if (!text && !el.querySelector('img')) return; // skip empty links
+                result.links.push({
+                    selector: getSelector(el),
+                    href: el.href || '',
+                    text: text || '[image link]',
+                    target: el.target || ''
+                });
+            });
+            // Cap links at 50
+            result.links = result.links.slice(0, 50);
+
+            // Other clickable: [role="button"], [onclick], etc.
+            document.querySelectorAll('[role="button"], [onclick], [tabindex="0"]').forEach(el => {
+                if (!el.offsetParent) return;
+                if (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'INPUT') return;
+                result.other_clickable.push({
+                    selector: getSelector(el),
+                    tag: el.tagName.toLowerCase(),
+                    text: el.textContent.trim().substring(0, 80),
+                    role: el.getAttribute('role') || ''
+                });
+            });
+            result.other_clickable = result.other_clickable.slice(0, 30);
+
+            return result;
+        }""")
+    except Exception as exc:
+        return json.dumps({"error": str(exc)})
+
+    # Add summary
+    summary = (
+        f"Forms: {len(elements.get('forms', []))}, "
+        f"Inputs: {len(elements.get('inputs', []))}, "
+        f"Buttons: {len(elements.get('buttons', []))}, "
+        f"Links: {len(elements.get('links', []))}, "
+        f"Selects: {len(elements.get('selects', []))}, "
+        f"Textareas: {len(elements.get('textareas', []))}"
+    )
+    return json.dumps({
+        "url": page.url,
+        "title": await page.title(),
+        "summary": summary,
+        **elements
+    })
+
+
+@mcp.tool()
 async def browser_close() -> str:
     """Close the browser and release all resources.
 
