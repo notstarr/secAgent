@@ -41,10 +41,21 @@ def init_db() -> None:
     existing_project_cols = {c["name"] for c in inspector.get_columns("projects")}
     _migrations = {
         "conversation_snapshot": "ALTER TABLE projects ADD COLUMN conversation_snapshot TEXT DEFAULT ''",
+        "skills_json": "ALTER TABLE projects ADD COLUMN skills_json TEXT DEFAULT '[]'",
     }
     with engine.connect() as _conn:
         for col, stmt in _migrations.items():
             if col not in existing_project_cols:
+                _conn.execute(_text(stmt))
+        _conn.commit()
+    # ── agents table migrations ───────────────────────────────────────────────
+    existing_agent_cols = {c["name"] for c in inspector.get_columns("agents")}
+    _agent_migrations = {
+        "sub_agents_json": "ALTER TABLE agents ADD COLUMN sub_agents_json TEXT DEFAULT '[]'",
+    }
+    with engine.connect() as _conn:
+        for col, stmt in _agent_migrations.items():
+            if col not in existing_agent_cols:
                 _conn.execute(_text(stmt))
         _conn.commit()
     _seed_defaults()
@@ -68,6 +79,8 @@ def _seed_defaults() -> None:
             "strategy_no_progress_limit": "12",
             "strategy_browser_cooldown_rounds": "6",
             "strategy_browser_ratio_limit_pct": "80",
+            "llm_request_timeout_sec": "180",
+            "llm_request_retry": "2",
         }
         existing_keys = {r.key for r in db.query(Setting).all()}
         for _k, _v in _DEFAULT_SETTINGS.items():
@@ -141,119 +154,9 @@ def _seed_defaults() -> None:
                 ),
             ])
 
-        # ── Built-in Tools ────────────────────────────────────────────────────
-        if not db.query(ToolDef).first():
-            _BUILTIN_TOOLS = [
-                {
-                    "name": "dns_lookup",
-                    "description": "DNS 查询 — 支持 A/MX/TXT/NS/CNAME 等记录类型",
-                    "code": (
-                        "from secagent.tools.network_tools import dns_lookup\n"
-                        "# 用法: dns_lookup(hostname='example.com', record_types=['A','MX','TXT'])"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "port_scan",
-                    "description": "TCP 端口扫描 — 探测目标主机开放端口",
-                    "code": (
-                        "from secagent.tools.network_tools import port_scan\n"
-                        "# 用法: port_scan(host='192.168.1.1', ports=[80,443,22,8080])"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "whois_lookup",
-                    "description": "WHOIS 查询 — 获取域名注册信息",
-                    "code": (
-                        "from secagent.tools.network_tools import whois_lookup\n"
-                        "# 用法: whois_lookup(target='example.com')"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "fetch_http_headers",
-                    "description": "获取 HTTP 响应头 — 检测安全头配置缺失",
-                    "code": (
-                        "from secagent.tools.web_tools import fetch_http_headers\n"
-                        "# 用法: fetch_http_headers(url='https://example.com')"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "http_request",
-                    "description": "通用 HTTP 请求 — 支持 GET/POST/PUT/DELETE 等方法",
-                    "code": (
-                        "from secagent.tools.web_tools import http_request\n"
-                        "# 用法: http_request(url='https://example.com/api', method='POST', body='{...}')"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "detect_waf",
-                    "description": "WAF 检测 — 识别 Cloudflare/AWS WAF/Akamai 等防护",
-                    "code": (
-                        "from secagent.tools.web_tools import detect_waf\n"
-                        "# 用法: detect_waf(url='https://example.com')"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "crawl_links",
-                    "description": "链接爬取 — 抓取页面所有内/外部链接",
-                    "code": (
-                        "from secagent.tools.web_tools import crawl_links\n"
-                        "# 用法: crawl_links(url='https://example.com', max_links=50)"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "check_common_vulns",
-                    "description": "常见漏洞检测 — 探测敏感路径/版本泄露/常见配置错误",
-                    "code": (
-                        "from secagent.tools.web_tools import check_common_vulns\n"
-                        "# 用法: check_common_vulns(target_url='https://example.com')"
-                    ),
-                    "enabled": True,
-                },
-                {
-                    "name": "scan_xss",
-                    "description": "XSS 扫描 — 测试 URL 参数是否存在反射型 XSS 漏洞",
-                    "code": "from secagent.tools.pentest_tools import scan_xss",
-                    "enabled": True,
-                },
-                {
-                    "name": "scan_sqli",
-                    "description": "SQL 注入扫描 — 错误回显和时间瘦2种检测方式",
-                    "code": "from secagent.tools.pentest_tools import scan_sqli",
-                    "enabled": True,
-                },
-                {
-                    "name": "scan_ssrf",
-                    "description": "SSRF 扫描 — 探测服务端请求伪造漏洞，包括 AWS/GCP/阿里云内网元数据路径",
-                    "code": "from secagent.tools.pentest_tools import scan_ssrf",
-                    "enabled": True,
-                },
-                {
-                    "name": "fuzz_paths",
-                    "description": "路径模糊 — 对目标常见目录/文件/API 路径进行探测",
-                    "code": "from secagent.tools.pentest_tools import fuzz_paths",
-                    "enabled": True,
-                },
-                {
-                    "name": "extract_js_endpoints",
-                    "description": "JS 端点提取 — 分析 JS 文件中的 API 路径、密钥和外部链接",
-                    "code": "from secagent.tools.pentest_tools import extract_js_endpoints",
-                    "enabled": True,
-                },
-                {
-                    "name": "test_idor",
-                    "description": "IDOR/越权测试 — 通过切换资源 ID 检测越权访问漏洞",
-                    "code": "from secagent.tools.pentest_tools import test_idor",
-                    "enabled": True,
-                },
-            ]
-            db.add_all([ToolDef(**t) for t in _BUILTIN_TOOLS])
+        # ── Built-in Tools removed — builtin tools are now registered via
+        #    code in _ALL_TOOLS dict (app.py) and /api/tools/all endpoint.
+        #    tool_defs table is only for user-created custom tools.
 
         # ── Built-in MCP Servers ──────────────────────────────────────────────
         if not db.query(MCPServer).first():
@@ -288,42 +191,9 @@ def reseed_builtin() -> dict:
     db: Session = SessionLocal()
     counts = {"tools": 0, "agents": 0, "mcps": 0}
     try:
-        # Tools — insert if name not exists
-        _BUILTIN_TOOLS = [
-            ("dns_lookup",        "DNS 查询 — 支持 A/MX/TXT/NS/CNAME 等记录类型",
-             "from secagent.tools.network_tools import dns_lookup"),
-            ("port_scan",         "TCP 端口扫描 — 探测目标主机开放端口",
-             "from secagent.tools.network_tools import port_scan"),
-            ("whois_lookup",      "WHOIS 查询 — 获取域名注册信息",
-             "from secagent.tools.network_tools import whois_lookup"),
-            ("fetch_http_headers","获取 HTTP 响应头 — 检测安全头配置缺失",
-             "from secagent.tools.web_tools import fetch_http_headers"),
-            ("http_request",      "通用 HTTP 请求 — 支持 GET/POST/PUT/DELETE 等方法",
-             "from secagent.tools.web_tools import http_request"),
-            ("detect_waf",        "WAF 检测 — 识别 Cloudflare/AWS WAF/Akamai 等防护",
-             "from secagent.tools.web_tools import detect_waf"),
-            ("crawl_links",       "链接爬取 — 抓取页面所有内/外部链接",
-             "from secagent.tools.web_tools import crawl_links"),
-            ("check_common_vulns","常见漏洞检测 — 探测敏感路径/版本泄露/常见配置错误",
-             "from secagent.tools.web_tools import check_common_vulns"),
-            ("scan_xss",          "XSS 扫描 — 测试 URL 参数是否存在反射型 XSS 漏洞",
-             "from secagent.tools.pentest_tools import scan_xss"),
-            ("scan_sqli",         "SQL 注入扫描 — 错误回显和时间盲注两种检测方式",
-             "from secagent.tools.pentest_tools import scan_sqli"),
-            ("scan_ssrf",         "SSRF 扫描 — 探测服务端请求伪造漏洞，包括云服务元数据路径",
-             "from secagent.tools.pentest_tools import scan_ssrf"),
-            ("fuzz_paths",        "路径模糊 — 对目标常见目录/文件/API 路径进行探测",
-             "from secagent.tools.pentest_tools import fuzz_paths"),
-            ("extract_js_endpoints", "JS 端点提取 — 分析 JS 文件中的 API 路径、密钥和外部链接",
-             "from secagent.tools.pentest_tools import extract_js_endpoints"),
-            ("test_idor",         "IDOR/越权测试 — 通过切换资源 ID 检测越权访问漏洞",
-             "from secagent.tools.pentest_tools import test_idor"),
-        ]
-        existing_tools = {t.name for t in db.query(ToolDef).all()}
-        for name, desc, code in _BUILTIN_TOOLS:
-            if name not in existing_tools:
-                db.add(ToolDef(name=name, description=desc, code=code, enabled=True))
-                counts["tools"] += 1
+        # Tools — no longer seeded into tool_defs.
+        # Builtin tools are registered via code in _ALL_TOOLS (app.py)
+        # and exposed through /api/tools/all. tool_defs is for custom tools only.
 
         # Agents — insert if name not exists
         _BUILTIN_AGENTS = [

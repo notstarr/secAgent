@@ -30,6 +30,7 @@ from secagent.web.routers.projects import router as projects_router
 from secagent.web.routers.vulns import router as vulns_router
 from secagent.web.routers.mcps import router as mcps_router
 from secagent.web.routers.files import router as files_router
+from secagent.web.routers.memories import router as memories_router
 from secagent.web.routers.crud import (
     tools_router,
     agents_router,
@@ -362,7 +363,7 @@ class _MCPBridge:
                     session.call_tool(tool_info.name, kwargs), loop
                 )
                 try:
-                    result = fut.result(timeout=60)
+                    result = fut.result(timeout=180)
                     content = result.content
                     if isinstance(content, list):
                         parts = []
@@ -373,8 +374,10 @@ class _MCPBridge:
                                 parts.append(str(item))
                         return "\n".join(parts)
                     return str(content)
+                except TimeoutError:
+                    return f"MCP tool error: 工具调用超时 (180s)"
                 except Exception as exc:
-                    return f"MCP tool error: {exc}"
+                    return f"MCP tool error: {type(exc).__name__}: {exc}"
 
         return MCPTool()
 
@@ -418,7 +421,7 @@ app.add_middleware(
 
 # ── API routers ───────────────────────────────────────────────────────────────
 
-for r in (projects_router, vulns_router, mcps_router, files_router, tools_router, agents_router, skills_router, settings_router):
+for r in (projects_router, vulns_router, mcps_router, files_router, memories_router, tools_router, agents_router, skills_router, settings_router):
     app.include_router(r)
 
 # ── Static files + SPA ────────────────────────────────────────────────────────
@@ -453,7 +456,7 @@ async def ws_run(websocket: WebSocket, project_id: int):
     if previous_run:
         previous_run.cancel_event.set()
         if previous_run.bridge is not None:
-            previous_run.bridge.shutdown()
+            await asyncio.get_event_loop().run_in_executor(None, previous_run.bridge.shutdown)
         old_thread = previous_run.thread
         if old_thread and old_thread.is_alive():
             for _ in range(50):
@@ -499,10 +502,13 @@ async def ws_run(websocket: WebSocket, project_id: int):
             cfg.openai_compat_api_key = api_key
             cfg.openai_compat_model = model
 
-        # ── 从设置中应用迭代上限 ────────────────────────────────────────
+        # ── 从设置中应用迭代上限和 max_tokens ──────────────────────────
         _max_iter = int(settings.get("max_iterations") or "100")
         if _max_iter > 0:
             cfg.max_iterations = _max_iter
+        _max_tokens = int(settings.get("max_tokens") or "16384")
+        if _max_tokens > 0:
+            cfg.max_tokens = _max_tokens
 
         # ── Load agent by project.agent_id ─────────────────────────────
         agent_row: AgentModel | None = None
@@ -525,19 +531,23 @@ async def ws_run(websocket: WebSocket, project_id: int):
         # ── Resolve tool functions ─────────────────────────────────────
         from secagent.tools.network_tools import dns_lookup, port_scan, whois_lookup
         from secagent.tools.web_tools import (
-            fetch_http_headers, http_request, detect_waf, crawl_links, check_common_vulns
+            fetch_http_headers, http_request, advanced_http_request, detect_waf, crawl_links, check_common_vulns
         )
         from secagent.tools.pentest_tools import (
             scan_xss, scan_sqli, scan_ssrf, fuzz_paths, extract_js_endpoints, test_idor
         )
+        from secagent.tools.script_tools import execute_python_script, exec_command
         _ALL_TOOLS = {
             "dns_lookup": dns_lookup, "port_scan": port_scan, "whois_lookup": whois_lookup,
             "fetch_http_headers": fetch_http_headers, "http_request": http_request,
+            "advanced_http_request": advanced_http_request,
             "detect_waf": detect_waf, "crawl_links": crawl_links,
             "check_common_vulns": check_common_vulns,
             "scan_xss": scan_xss, "scan_sqli": scan_sqli, "scan_ssrf": scan_ssrf,
             "fuzz_paths": fuzz_paths, "extract_js_endpoints": extract_js_endpoints,
             "test_idor": test_idor,
+            "execute_python_script": execute_python_script,
+            "exec_command": exec_command,
         }
         tools = [_ALL_TOOLS[n] for n in tool_names if n in _ALL_TOOLS] or list(_ALL_TOOLS.values())
 
@@ -564,10 +574,57 @@ async def ws_run(websocket: WebSocket, project_id: int):
                     "env": json.loads(mcp_row.env_json or "{}"),
                 })
 
+        # ── Project memory: inject tools + summary into prompt ──────────
+        from secagent.tools.memory_tools import build_memory_tools, get_memory_summary
+        agent_label = agent_row.name if agent_row else "default"
+        memory_tools = build_memory_tools(project_id, source=f"{agent_label}-run")
+        tools = tools + memory_tools
+
+        memory_summary = get_memory_summary(project_id)
+        if memory_summary:
+            system_prompt = system_prompt + "\n\n" + memory_summary
+
+        # ── Inject selected Skills into system prompt ──────────────────
+        from secagent.web.models import Skill as SkillModel
+        try:
+            skill_ids: list[int] = json.loads(project.skills_json or "[]")
+        except Exception:
+            skill_ids = []
+        if skill_ids:
+            skill_rows = db.query(SkillModel).filter(SkillModel.id.in_(skill_ids)).all()
+            if skill_rows:
+                skill_parts = ["\n\n## 技能指引\n"]
+                for sr in skill_rows:
+                    skill_parts.append(f"### {sr.name}\n{sr.content}\n")
+                system_prompt = system_prompt + "\n".join(skill_parts)
+
         runner = AgentRunner(config=cfg, system_prompt=system_prompt, tools=tools)
 
+        # ── Multi-agent mode: replace runner with orchestrator ──────────
+        sub_agent_configs: list[dict] = []
+        if agent_row and agent_row.mode == "multi":
+            try:
+                sub_agent_ids: list[int] = json.loads(agent_row.sub_agents_json or "[]")
+            except Exception:
+                sub_agent_ids = []
+            if sub_agent_ids:
+                for sa_id in sub_agent_ids:
+                    sa_row = db.get(AgentModel, sa_id)
+                    if sa_row:
+                        try:
+                            sa_tool_names = json.loads(sa_row.tools_json or "[]")
+                        except Exception:
+                            sa_tool_names = []
+                        sa_tools = [_ALL_TOOLS[n] for n in sa_tool_names if n in _ALL_TOOLS] or list(_ALL_TOOLS.values())
+                        sub_agent_configs.append({
+                            "name": sa_row.name,
+                            "description": sa_row.description or "",
+                            "system_prompt": sa_row.system_prompt or "",
+                            "tools": sa_tools,
+                        })
+
         # ── 暂停/续跑 状态初始化 ─────────────────────────────────────────
-        _project_runs[project_id] = run_state
+        # run_state 在线程启动前统一注册（见 _t.start() 前）
 
         initial_messages: list[dict] | None = None
         if project.conversation_snapshot:
@@ -664,6 +721,7 @@ async def ws_run(websocket: WebSocket, project_id: int):
 
         def _run_with_streaming() -> str:
             """Monkey-patch runner to intercept tool events and stream them."""
+            nonlocal runner
             # ── Connect MCP servers ────────────────────────────────────
             bridge = _MCPBridge()
             run_state.bridge = bridge
@@ -680,6 +738,17 @@ async def ws_run(websocket: WebSocket, project_id: int):
 
             if mcp_tools:
                 runner.tools = runner.tools + mcp_tools
+
+            # ── Multi-agent: replace runner with orchestrator ──────────
+            if sub_agent_configs:
+                from secagent.core.multi_agent import build_multi_agent_runner
+                runner = build_multi_agent_runner(
+                    config=cfg,
+                    sub_agents=sub_agent_configs,
+                    base_tools=runner.tools,
+                    on_event=_send,
+                )
+                _send({"type": "info", "content": f"多智能体模式：已加载 {len(sub_agent_configs)} 个子智能体"})
 
             try:
                 return _do_run()
@@ -719,10 +788,12 @@ async def ws_run(websocket: WebSocket, project_id: int):
                     _browser_ratio_limit_pct = int(settings.get("strategy_browser_ratio_limit_pct") or 80)
                     _llm_timeout_sec = int(settings.get("llm_request_timeout_sec") or 180)
                     _llm_retry = int(settings.get("llm_request_retry") or 2)
+                    _compress_keep = int(settings.get("compress_keep_messages") or 10)
+                    _short_threshold = int(settings.get("short_content_threshold") or 10)
 
                     # ── Artifact 系统：大结果转存，LLM 按需翻页查询 ─────────
                     _ARTIFACT_NO_STORE = {"browser_execute_js"}  # 这些工具的结果永不转 artifact
-                    _ARTIFACT_PAGE_SIZE = 3000
+                    _ARTIFACT_PAGE_SIZE = int(settings.get("artifact_page_size") or 3000)
                     _artifacts_store: dict[str, dict] = {}  # 本次运行生命周期内有效
                     # ── Executor strategy guard state ─────────────────────
                     _last_call_sig = ""
@@ -827,7 +898,7 @@ async def ws_run(websocket: WebSocket, project_id: int):
 
                     def _compress_context(msgs: list[dict]) -> list[dict]:
                         """将 msgs[2:-KEEP] 的历史压缩为一条摘要，减少 context 占用。"""
-                        KEEP = 10  # 保留最近 10 条消息不压缩
+                        KEEP = _compress_keep
                         if len(msgs) <= 2 + KEEP:
                             return msgs
                         to_compress = msgs[2:-KEEP]
@@ -905,6 +976,17 @@ async def ws_run(websocket: WebSocket, project_id: int):
                         msg = resp.choices[0].message
                         finish = resp.choices[0].finish_reason
 
+                        # ── finish_reason == "length" 表示 max_tokens 截断，不应视为结束 ──
+                        if finish == "length":
+                            partial = (msg.content or "").strip()
+                            if partial:
+                                log_lines.append({"type": "think", "content": partial})
+                                _send({"type": "think", "content": partial})
+                            _send({"type": "info", "content": "[输出截断] max_tokens 不足，自动继续..."})
+                            messages.append({"role": "assistant", "content": msg.content or ""})
+                            messages.append({"role": "user", "content": "你的输出因 token 限制被截断了，请从截断处继续。"})
+                            continue
+
                         if finish == "tool_calls" and msg.tool_calls:
                             # 捕获模型在调用工具前的思考文本
                             if msg.content and msg.content.strip():
@@ -960,7 +1042,14 @@ async def ws_run(websocket: WebSocket, project_id: int):
                                     continue
 
                                 if fn is None:
-                                    result_str = f"Error: tool '{tc.function.name}' not found"
+                                    available = sorted(tool_map.keys())
+                                    result_str = (
+                                        f"Error: tool '{tc.function.name}' not found. "
+                                        f"Available tools: {', '.join(available)}. "
+                                        "只使用上述列表中的工具，不要发明工具名。"
+                                        "如果你需要执行 shell 命令请用 exec_command，"
+                                        "如果你需要发 HTTP 请求请用 advanced_http_request。"
+                                    )
                                 else:
                                     try:
                                         import json as _json
@@ -978,11 +1067,10 @@ async def ws_run(websocket: WebSocket, project_id: int):
                                 _send({"type": "tool_result", "content": preview})
                                 # Auto-save MCP screenshots to file manager
                                 _try_save_file(result_str, tc.function.name, project_id, db)
-                                inserted_findings = _persist_tool_findings(tc.function.name, result_str)
 
                                 # ── Progress detection and strategy switch ─────────────────
                                 _fp = f"{tc.function.name}|{result_str[:180]}|{len(result_str)}"
-                                _has_progress = inserted_findings > 0 or (_fp != _last_result_fingerprint)
+                                _has_progress = _fp != _last_result_fingerprint
                                 _last_result_fingerprint = _fp
                                 _no_progress_streak = 0 if _has_progress else (_no_progress_streak + 1)
                                 _total_known_calls = _browser_calls + _non_browser_calls
@@ -1035,6 +1123,14 @@ async def ws_run(websocket: WebSocket, project_id: int):
                                 break
                         else:
                             final_text = msg.content or ""
+                            # ── 防止模型因异常返回极短内容就结束整个任务 ──
+                            _stripped = final_text.strip().rstrip(".")
+                            if _short_threshold > 0 and len(_stripped) < _short_threshold and _iter < cfg2.max_iterations - 1:
+                                _send({"type": "info", "content": f"[异常结束保护] 模型返回了过短内容 \"{final_text.strip()[:50]}\"，自动继续..."})
+                                log_lines.append({"type": "info", "content": f"[异常结束保护] 过短回复: {final_text.strip()[:50]}"})
+                                messages.append({"role": "assistant", "content": final_text})
+                                messages.append({"role": "user", "content": "你的回复似乎不完整或被意外截断。请继续执行渗透测试任务，不要停止。"})
+                                continue
                             inserted = _persist_report_findings(final_text)
                             if inserted:
                                 _send({"type": "info", "content": f"[漏洞入库] 已从最终报告写入 {inserted} 条漏洞"})
@@ -1116,7 +1212,7 @@ async def ws_run(websocket: WebSocket, project_id: int):
 
         _t = threading.Thread(target=_thread_target, daemon=True)
         run_state.thread = _t
-        _project_runs[project_id] = run_state
+        _project_runs[project_id] = run_state  # 仅此一处注册
         _t.start()
 
         # \u5f02\u6b65\u8f6e\u8be2\uff0c\u76f4\u5230\u7ebf\u7a0b\u7ed3\u675f
@@ -1138,7 +1234,7 @@ async def ws_run(websocket: WebSocket, project_id: int):
         logger.info("WS disconnected: project %s", project_id)
         cancel_event.set()
         if run_state.bridge is not None:
-            run_state.bridge.shutdown()
+            await asyncio.get_event_loop().run_in_executor(None, run_state.bridge.shutdown)
         await asyncio.sleep(0.3)  # 等待 agent 线程更新 messages_ref
         snapshot = messages_ref.get("data", [])
         try:
@@ -1153,7 +1249,9 @@ async def ws_run(websocket: WebSocket, project_id: int):
                            content=json.dumps(log_lines, ensure_ascii=False)))
             _proj = db.get(_P, project_id)
             if _proj:
-                _proj.status = "paused"
+                # 仅在任务未结束时标记 paused，避免覆盖 completed/idle
+                if _proj.status == "running":
+                    _proj.status = "paused"
                 if snapshot:
                     _proj.conversation_snapshot = json.dumps(snapshot, ensure_ascii=False)
             db.commit()
@@ -1199,7 +1297,7 @@ async def terminate_project(project_id: int):
     if run_state:
         run_state.cancel_event.set()
         if run_state.bridge is not None:
-            run_state.bridge.shutdown()
+            await asyncio.get_event_loop().run_in_executor(None, run_state.bridge.shutdown)
     _db = _SL()
     try:
         proj = _db.get(_P, project_id)
@@ -1208,9 +1306,13 @@ async def terminate_project(project_id: int):
             proj.conversation_snapshot = ""  # \u5f3a\u5236\u7ec8\u6b62\u65f6\u6e05\u9664\u5feb\u7167
             _db.commit()
         if run_state and run_state.thread and run_state.thread.is_alive():
-            run_state.thread.join(timeout=10)
+            await asyncio.get_event_loop().run_in_executor(
+                None, lambda: run_state.thread.join(timeout=10)
+            )
         current = _project_runs.get(project_id)
-        if current is run_state and run_state.finished.is_set():
+        if run_state and current is run_state and run_state.finished.is_set():
+            _project_runs.pop(project_id, None)
+        elif not run_state:
             _project_runs.pop(project_id, None)
         return {"ok": True}
     finally:

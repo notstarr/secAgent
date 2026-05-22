@@ -21,7 +21,7 @@ class AgentConfig:
         default_factory=lambda: os.environ.get("SECAGENT_MODEL", "claude-opus-4-5-20250929")
     )
     max_tokens: int = field(
-        default_factory=lambda: int(os.environ.get("SECAGENT_MAX_TOKENS", "8192"))
+        default_factory=lambda: int(os.environ.get("SECAGENT_MAX_TOKENS", "16384"))
     )
     max_iterations: int = field(
         default_factory=lambda: int(os.environ.get("SECAGENT_MAX_ITERATIONS", "100"))

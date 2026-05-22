@@ -16,6 +16,7 @@ class ProjectCreate(BaseModel):
     description: str = ""
     mode: str = "single"
     agent_id: Optional[int] = None
+    skills_json: str = "[]"
 
 
 class ProjectUpdate(BaseModel):
@@ -25,6 +26,7 @@ class ProjectUpdate(BaseModel):
     mode: Optional[str] = None
     agent_id: Optional[int] = None
     status: Optional[str] = None
+    skills_json: Optional[str] = None
 
 
 class ProjectOut(BaseModel):
@@ -34,6 +36,7 @@ class ProjectOut(BaseModel):
     description: str
     mode: str
     agent_id: Optional[int]
+    skills_json: str
     status: str
     created_at: datetime
     model_config = {"from_attributes": True}
@@ -157,6 +160,7 @@ class AgentCreate(BaseModel):
     system_prompt: str = ""
     tools_json: str = "[]"
     mcps_json: str = "[]"
+    sub_agents_json: str = "[]"
 
 
 class AgentUpdate(BaseModel):
@@ -166,6 +170,7 @@ class AgentUpdate(BaseModel):
     system_prompt: Optional[str] = None
     tools_json: Optional[str] = None
     mcps_json: Optional[str] = None
+    sub_agents_json: Optional[str] = None
 
 
 class AgentOut(BaseModel):
@@ -176,6 +181,7 @@ class AgentOut(BaseModel):
     system_prompt: str
     tools_json: str
     mcps_json: str
+    sub_agents_json: str
     created_at: datetime
     model_config = {"from_attributes": True}
 
@@ -226,3 +232,6 @@ class SettingUpdate(BaseModel):
     strategy_no_progress_limit: Optional[str] = None
     strategy_browser_cooldown_rounds: Optional[str] = None
     strategy_browser_ratio_limit_pct: Optional[str] = None
+    # LLM request resilience
+    llm_request_timeout_sec: Optional[str] = None
+    llm_request_retry: Optional[str] = None

@@ -24,6 +24,56 @@ def list_tools(db: Session = Depends(get_db)):
     return db.query(ToolDef).order_by(ToolDef.created_at.desc()).all()
 
 
+@tools_router.get("/all")
+def list_all_tools(db: Session = Depends(get_db)):
+    """Return ALL tool sources: built-in, MCP, and user-defined."""
+    from secagent.tools.web_tools import advanced_http_request, crawl_links
+    from secagent.tools.pentest_tools import fuzz_paths, extract_js_endpoints
+    from secagent.tools.script_tools import execute_python_script, exec_command
+    from secagent.web.models import MCPServer as MCPServerModel
+
+    result: list[dict] = []
+
+    # 1. Built-in tools (essential only)
+    _builtins = [
+        advanced_http_request, crawl_links,
+        fuzz_paths, extract_js_endpoints,
+        execute_python_script, exec_command,
+    ]
+    for fn in _builtins:
+        name = getattr(fn, "name", None) or getattr(fn, "__name__", "unknown")
+        desc = getattr(fn, "description", None) or (getattr(fn, "__doc__", None) or "").split("\n")[0].strip()
+        result.append({
+            "name": name,
+            "description": desc,
+            "source": "builtin",
+            "enabled": True,
+        })
+
+    # 2. MCP tools (from enabled servers)
+    for mcp in db.query(MCPServerModel).filter_by(enabled=True).all():
+        result.append({
+            "name": f"[MCP] {mcp.name}",
+            "description": mcp.description or f"MCP server: {mcp.command}",
+            "source": "mcp",
+            "source_name": mcp.name,
+            "enabled": True,
+        })
+
+    # 3. User-defined tools (from tool_defs table)
+    for td in db.query(ToolDef).order_by(ToolDef.created_at.desc()).all():
+        result.append({
+            "id": td.id,
+            "name": td.name,
+            "description": td.description or "",
+            "code": td.code or "",
+            "source": "custom",
+            "enabled": td.enabled,
+        })
+
+    return result
+
+
 @tools_router.post("/", response_model=ToolOut)
 def create_tool(body: ToolCreate, db: Session = Depends(get_db)):
     t = ToolDef(**body.model_dump())

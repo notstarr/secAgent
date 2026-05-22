@@ -16,7 +16,7 @@ tailwind.config = {
 <style>
 [x-cloak]{display:none!important}
 /* nav-card: styles applied inline */
-.card{@apply bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6;}
+.card{@apply bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6;}
 .badge-critical{@apply bg-red-100 text-red-700 border border-red-200;}
 .dark .badge-critical{background-color:rgba(153,27,27,0.25);color:#fca5a5;border-color:rgba(185,28,28,0.4);}
 .badge-high{@apply bg-orange-100 text-orange-700 border border-orange-200;}
@@ -43,17 +43,17 @@ tailwind.config = {
 .status-paused{@apply bg-orange-100 text-orange-600;}
 .dark .status-paused{background-color:rgba(154,52,18,0.3);color:#fdba74;}
 /* List item bubble card */
-.item-card{background:linear-gradient(135deg,#fff 0%,#f8fafc 100%);border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,0.05),0 1px 2px rgba(0,0,0,0.04);padding:14px 16px;transition:all 0.2s ease;}
+.item-card{background:linear-gradient(135deg,#fff 0%,#f8fafc 100%);border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,0.05),0 1px 2px rgba(0,0,0,0.04);padding:14px 16px;transition:all 0.2s ease;}
 .item-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);transform:translateY(-1px);}
 .dark .item-card{background:linear-gradient(135deg,#1e293b 0%,#172032 100%);border:1px solid #334155;box-shadow:0 1px 6px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.2);}
 .dark .item-card:hover{box-shadow:0 4px 14px rgba(0,0,0,0.4),0 1px 3px rgba(0,0,0,0.25);}
-.input{@apply w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white transition;}
+.input{@apply w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white transition;}
 .dark .input{background-color:#334155;color:#f1f5f9;border-color:#475569;}
 .dark .input:focus{border-color:#60a5fa;}
 .dark .input::placeholder{color:#94a3b8;}
 .dark select.input option{background-color:#1e293b;color:#f1f5f9;}
 .dark select{color-scheme:dark;}
-.btn{@apply px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer;}
+.btn{@apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer;}
 .btn-primary{@apply bg-primary-600 text-white hover:bg-primary-700 shadow-sm;}
 .btn-ghost{@apply text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700;}
 .tag{@apply inline-flex items-center rounded-full text-xs font-medium;}
@@ -65,7 +65,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 .form-input-elevated{
   background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
   border:1px solid #cbd5e1;
-  border-radius:14px;
+  border-radius:10px;
   box-shadow:inset 0 1px 1px rgba(255,255,255,0.9),0 1px 3px rgba(15,23,42,0.06);
 }
 .form-input-elevated:focus{
@@ -154,6 +154,14 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
   border-color:#64748b;
   background:#1e293b;
 }
+/* ── CyberStrike-inspired sidebar & header ── */
+.sidebar-bg{background:linear-gradient(180deg,#fafbfc 0%,#f0f2f5 100%);}
+.dark .sidebar-bg{background:#0f172a;}
+.header-bg{background:linear-gradient(135deg,#ffffff 0%,#f8f9fa 100%);}
+.dark .header-bg{background:#1e293b;}
+.nav-item{padding-left:16px;padding-right:16px;border-left:3px solid transparent;}
+.nav-active{border-left-color:#2563eb !important;background:rgba(37,99,235,0.06);}
+.dark .nav-active{border-left-color:#60a5fa !important;background:rgba(96,165,250,0.08);}
 </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen" x-cloak>
@@ -161,40 +169,40 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 <div class="flex h-screen overflow-hidden">
 
   <!-- ═══ SIDEBAR ══════════════════════════════════════════ -->
-  <aside class="w-64 flex-shrink-0 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col">
-    <div class="px-4 py-5 border-b border-slate-200 dark:border-slate-700">
+  <aside class="w-60 flex-shrink-0 sidebar-bg border-r border-slate-200 dark:border-slate-700 flex flex-col" style="box-shadow:2px 0 8px rgba(0,0,0,0.04)">
+    <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-700">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-primary-600 rounded-xl flex items-center justify-center shadow-md">
-          <i class="fa-solid fa-shield-halved text-white text-base"></i>
+        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center shadow-sm">
+          <i class="fa-solid fa-shield-halved text-white text-sm"></i>
         </div>
         <div>
-          <div class="font-bold text-primary-700 dark:text-primary-400 text-base leading-tight">secAgent</div>
-          <div class="text-xs text-slate-400">AI Pentest Platform</div>
+          <div class="font-bold text-slate-800 dark:text-slate-100 text-[15px] leading-tight tracking-tight">secAgent</div>
+          <div class="text-[11px] text-slate-400 tracking-wide">AI Pentest Platform</div>
         </div>
       </div>
     </div>
-    <nav class="flex-1 px-3 py-4 space-y-2 overflow-y-auto scroll-thin">
+    <nav class="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto scroll-thin">
       <template x-for="item in navItems" :key="item.id">
-        <div class="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 text-sm font-medium border shadow-sm"
+        <div class="nav-item flex items-center gap-3 py-2.5 rounded-md cursor-pointer transition-all duration-150 text-[13px] font-medium"
              :class="page===item.id
-               ? 'bg-primary-600 text-white border-primary-600 shadow-md'
-               : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 hover:shadow-md'"
+               ? 'nav-active text-primary-700 dark:text-primary-300'
+               : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-200'"
              @click="navigate(item.id)">
-          <i :class="item.icon + ' w-5 text-center text-sm'"></i>
+          <i :class="item.icon + ' w-5 text-center text-sm'" :style="page===item.id ? 'color:#2563eb' : ''"></i>
           <span x-text="item.label" class="flex-1"></span>
           <span x-show="item.id==='vulns' && vulnCount>0"
-                class="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none"
+                class="bg-red-500 text-white text-[11px] rounded-full px-1.5 py-0.5 leading-none"
                 x-text="vulnCount"></span>
         </div>
       </template>
     </nav>
-    <div class="px-3 pb-4 pt-2 border-t border-slate-200 dark:border-slate-700">
-      <div class="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 text-sm font-medium border shadow-sm"
+    <div class="px-2 pb-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+      <div class="nav-item flex items-center gap-3 py-2.5 rounded-md cursor-pointer transition-all duration-150 text-[13px] font-medium"
            :class="page==='settings'
-             ? 'bg-primary-600 text-white border-primary-600 shadow-md'
-             : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 hover:shadow-md'"
+             ? 'nav-active text-primary-700 dark:text-primary-300'
+             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-200'"
            @click="navigate('settings')">
-        <i class="fa-solid fa-gear w-5 text-center text-sm"></i>
+        <i class="fa-solid fa-gear w-5 text-center text-sm" :style="page==='settings' ? 'color:#2563eb' : ''"></i>
         <span class="flex-1">系统设置</span>
       </div>
     </div>
@@ -206,13 +214,13 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
     <!-- Main -->
     <div class="flex-1 flex flex-col overflow-hidden min-w-0">
       <!-- Topbar -->
-      <header class="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
+      <header class="header-bg dark:bg-slate-800 border-b border-slate-200/80 dark:border-slate-700 px-6 py-3.5 flex items-center justify-between flex-shrink-0" style="box-shadow:0 1px 3px rgba(0,0,0,0.04)">
         <div>
           <h1 class="text-lg font-semibold" x-text="currentTitle"></h1>
           <p class="text-xs text-slate-400 mt-0.5" x-text="currentSubtitle"></p>
         </div>
         <div class="flex items-center gap-3">
-          <button @click="darkMode=!darkMode;saveDarkMode()" class="btn btn-ghost w-9 h-9 p-0 flex items-center justify-center rounded-xl">
+          <button @click="darkMode=!darkMode;saveDarkMode()" class="btn btn-ghost w-8 h-8 p-0 flex items-center justify-center rounded-lg">
             <i :class="darkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
           </button>
           <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
@@ -249,7 +257,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
               <div class="text-xs text-slate-400 mt-0.5" x-text="filteredProjects.length + ' / ' + projects.length + ' 个项目'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
-              @click="openPanel('projectForm');editItem=null;projectForm={name:'',target:'',description:'',mode:'single',agent_id:''}">
+              @click="openPanel('projectForm');editItem=null;projectForm={name:'',target:'',description:'',mode:'single',agent_id:'',skills_json:'[]'}">
               <i class="fa-solid fa-plus"></i> 新建项目
             </button>
           </div>
@@ -640,21 +648,19 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
             <div class="flex flex-wrap items-center gap-3">
               <div class="flex-1 min-w-[220px] relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input class="input pl-9" x-model="search.tools" @keydown.enter.prevent="applySearch('tools')" placeholder="搜索 Tool 名称、描述、代码"/>
+                <input class="input pl-9" x-model="search.tools" @keydown.enter.prevent="applySearch('tools')" placeholder="搜索工具名称、描述"/>
               </div>
               <button class="btn btn-ghost text-sm" @click="applySearch('tools')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
-              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('tools', filteredTools)">
-                <span x-text="isAllSelected('tools', filteredTools)?'取消全选':'全选'"></span>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('tools', filteredTools.filter(t=>t.source==='custom'))">
+                <span x-text="isAllSelected('tools', filteredTools.filter(t=>t.source==='custom'))?'取消全选':'全选'"></span>
               </button>
-              <button class="btn btn-ghost text-sm" x-show="selected.tools.length>0" @click="batchToggleTools(true)">批量启用</button>
-              <button class="btn btn-ghost text-sm" x-show="selected.tools.length>0" @click="batchToggleTools(false)">批量停用</button>
               <button class="btn btn-ghost text-sm" x-show="selected.tools.length>0" @click="clearSelection('tools')">清空选择 (<span x-text="selected.tools.length"></span>)</button>
               <button class="btn btn-ghost text-sm text-red-500" x-show="selected.tools.length>0" @click="batchDeleteTools()">批量删除</button>
             </div>
             <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold text-sm">工具集</div>
-              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredTools.length + ' / ' + tools.length + ' 个已注册'"></div>
+              <div class="text-xs text-slate-400 mt-0.5" x-text="filteredTools.length + ' / ' + tools.length + ' 个可用'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
               @click="openPanel('toolForm');editItem=null;toolForm={name:'',description:'',code:'',enabled:true}">
@@ -663,41 +669,44 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <template x-for="t in filteredTools" :key="t.id">
+            <template x-for="t in filteredTools" :key="t.source+'-'+t.name">
               <div class="item-card">
-                <div class="flex items-start justify-between mb-3">
+                <div class="flex items-start justify-between mb-2">
                   <div class="flex items-center gap-2">
-                    <input x-show="showSelectors.tools" type="checkbox" class="select-check" :checked="isSelected('tools', t.id)" @change="toggleSelected('tools', t.id)">
-                    <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center"><i class="fa-solid fa-wrench text-green-600 text-sm"></i></div>
+                    <template x-if="t.source==='custom'">
+                      <input x-show="showSelectors.tools" type="checkbox" class="select-check" :checked="isSelected('tools', t.id)" @change="toggleSelected('tools', t.id)">
+                    </template>
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                      :class="t.source==='mcp'?'bg-purple-100 dark:bg-purple-900/30':t.source==='custom'?'bg-green-100 dark:bg-green-900/30':'bg-blue-100 dark:bg-blue-900/30'">
+                      <i class="text-sm" :class="t.source==='mcp'?'fa-solid fa-plug text-purple-600 dark:text-purple-400':t.source==='custom'?'fa-solid fa-code text-green-600 dark:text-green-400':'fa-solid fa-wrench text-blue-600 dark:text-blue-400'"></i>
+                    </div>
                     <div>
                       <div class="font-semibold text-sm" x-text="t.name"></div>
-                      <div class="text-xs text-slate-400 truncate max-w-36" x-text="t.description||'暂无描述'"></div>
+                      <div class="text-xs text-slate-400 truncate max-w-48" x-text="(t.description||'暂无描述').split('\n')[0]"></div>
                     </div>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" @click.stop="toggleTool(t)"
-                      class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
-                      :class="t.enabled ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'">
-                      <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                        :class="t.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
-                    </button>
-                    <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs" @click="editTool(t)"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs text-red-400" @click="deleteTool(t.id)"><i class="fa-solid fa-trash"></i></button>
+                  <div class="flex items-center gap-1.5">
+                    <span class="tag px-2 py-0.5 text-[10px] font-bold rounded-full"
+                      :class="t.source==='builtin'?'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400':t.source==='mcp'?'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400':'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'"
+                      x-text="t.source==='builtin'?'内置':t.source==='mcp'?'MCP':'自定义'"></span>
+                    <template x-if="t.source==='custom'">
+                      <div class="flex items-center gap-1">
+                        <button type="button" @click.stop="toggleTool(t)"
+                          class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                          :class="t.enabled ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'">
+                          <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                            :class="t.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                        </button>
+                        <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs" @click="editTool(t)"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs text-red-400" @click="deleteTool(t.id)"><i class="fa-solid fa-trash"></i></button>
+                      </div>
+                    </template>
                   </div>
                 </div>
-                <pre class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs overflow-x-auto max-h-20 scroll-thin text-slate-600 dark:text-slate-300" x-text="t.code.slice(0,150)+(t.code.length>150?'...':'')"></pre>
-                <!-- 测试区 -->
-                <div class="border-t border-slate-100 dark:border-slate-700/50 pt-2 mt-2">
-                  <div class="flex items-center gap-2">
-                    <button class="btn btn-ghost text-xs flex items-center gap-1 text-green-600 dark:text-green-400"
-                      @click="runToolTest(t)" :disabled="t._testing">
-                      <i class="fa-solid" :class="t._testing?'fa-spinner fa-spin':'fa-flask'"></i>
-                      <span x-text="t._testing?'测试中...':'测试调用'"></span>
-                    </button>
-                    <span x-show="t._testResult" class="text-xs" :class="t._testOk?'text-green-500 dark:text-green-400':'text-red-500 dark:text-red-400'" x-text="t._testOk?'✓ 调用成功':'✗ '+t._testError"></span>
-                  </div>
-                  <pre x-show="t._testResult && t._testOk" class="bg-slate-900 rounded p-2 text-xs text-green-300 max-h-32 overflow-y-auto scroll-thin whitespace-pre-wrap mt-1" x-text="t._testResult"></pre>
-                </div>
+                <!-- Code preview for custom tools -->
+                <template x-if="t.source==='custom' && t.code">
+                  <pre class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs overflow-x-auto max-h-20 scroll-thin text-slate-600 dark:text-slate-300" x-text="t.code.slice(0,150)+(t.code.length>150?'...':'')"></pre>
+                </template>
               </div>
             </template>
             <div x-show="filteredTools.length===0" class="col-span-2 card text-center py-16 text-slate-400">
@@ -727,7 +736,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
               <div class="text-xs text-slate-400 mt-0.5" x-text="filteredAgents.length + ' / ' + agents.length + ' 个已配置'"></div>
             </div>
             <button class="btn btn-primary flex items-center gap-2"
-              @click="openPanel('agentForm');editItem=null;agentForm={name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]'}">
+              @click="openPanel('agentForm');editItem=null;agentForm={name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]',sub_agents_json:'[]'}">
               <i class="fa-solid fa-plus"></i> 新增智能体
             </button>
           </div>
@@ -815,6 +824,69 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           </div>
         </div>
 
+        <!-- MEMORIES -->
+        <div x-show="page==='memories'" x-init="if(page==='memories') loadMemories()">
+          <div class="card mb-5 !p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input class="input pl-9" x-model="search.memories" @keydown.enter.prevent="applySearch('memories')" placeholder="搜索 key、value、来源"/>
+              </div>
+              <button class="btn btn-ghost text-sm" @click="applySearch('memories')"><i class="fa-solid fa-magnifying-glass mr-1"></i>搜索</button>
+              <select class="input text-sm w-44" x-model="memoryFilterProject">
+                <option value="">全部项目</option>
+                <template x-for="p in projects" :key="p.id">
+                  <option :value="p.id" x-text="p.name"></option>
+                </template>
+              </select>
+              <button class="btn btn-ghost text-sm" @click="toggleSelectAll('memories', filteredMemories)">
+                <span x-text="isAllSelected('memories', filteredMemories)?'取消全选':'全选'"></span>
+              </button>
+              <button class="btn btn-ghost text-sm" x-show="selected.memories.length>0" @click="clearSelection('memories')">清空选择 (<span x-text="selected.memories.length"></span>)</button>
+              <button class="btn btn-ghost text-sm text-red-500" x-show="selected.memories.length>0" @click="batchDeleteMemories()">批量删除</button>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-sm">记忆条目</div>
+                <div class="text-xs text-slate-400 mt-0.5" x-text="filteredMemories.length + ' / ' + memories.length + ' 条记忆'"></div>
+              </div>
+              <button class="btn btn-primary flex items-center gap-2"
+                @click="openPanel('memoryForm');editItem=null;memoryForm={project_id:'',key:'',value:'',source:''}">
+                <i class="fa-solid fa-plus"></i> 新增记忆
+              </button>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <template x-for="m in filteredMemories" :key="m.id">
+              <div class="item-card">
+                <div class="flex items-start justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <input x-show="showSelectors.memories" type="checkbox" class="select-check" :checked="isSelected('memories', m.id)" @change="toggleSelected('memories', m.id)">
+                    <div class="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center"><i class="fa-solid fa-brain text-teal-600 text-sm"></i></div>
+                    <div>
+                      <div class="font-semibold text-sm font-mono" x-text="m.key"></div>
+                      <div class="text-xs text-slate-400">
+                        <span x-text="m.project_name||('项目 #'+m.project_id)"></span>
+                        <span x-show="m.source" class="ml-2 text-teal-500" x-text="'· ' + m.source"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-[11px] text-slate-400" x-text="m.updated_at?.slice(0,16).replace('T',' ')"></span>
+                    <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs" @click="editMemory(m)"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-ghost w-7 h-7 p-0 flex items-center justify-center text-xs text-red-400" @click="deleteMemory(m.id)"><i class="fa-solid fa-trash"></i></button>
+                  </div>
+                </div>
+                <pre class="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 rounded-lg p-3 max-h-40 overflow-auto whitespace-pre-wrap break-all" x-text="m.value"></pre>
+              </div>
+            </template>
+            <div x-show="filteredMemories.length===0" class="card text-center py-16 text-slate-400">
+              <i class="fa-solid fa-brain text-4xl mb-3 block"></i>暂无记忆条目
+              <p class="text-xs mt-2">智能体运行时会自动保存关键发现，也可以手动添加</p>
+            </div>
+          </div>
+        </div>
+
         <!-- FILES -->
         <div x-show="page==='files'" x-init="if(page==='files') loadFiles()">
           <div class="card mb-5 !p-4 flex flex-wrap items-center gap-3">
@@ -892,7 +964,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
         <!-- FILE PREVIEW MODAL -->
         <div x-show="filePreview" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="filePreview=null">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-3xl w-full mx-4 overflow-hidden flex flex-col" style="max-height:90vh">
+          <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-3xl w-full mx-4 overflow-hidden flex flex-col" style="max-height:90vh">
             <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
               <span class="font-semibold text-sm truncate" x-text="filePreview?.name"></span>
               <button class="btn btn-ghost w-8 h-8 flex items-center justify-center" @click="filePreview=null"><i class="fa-solid fa-xmark"></i></button>
@@ -921,12 +993,12 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
             <div class="card">
               <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fa-solid fa-palette text-primary-500"></i> 外观</h3>
               <div class="flex gap-3">
-                <button class="flex-1 py-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 text-sm"
+                <button class="flex-1 py-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2 text-sm"
                   :class="!darkMode?'border-primary-500 bg-primary-50 text-primary-700':'border-slate-200 hover:border-slate-300'"
                   @click="darkMode=false;saveDarkMode()">
                   <i class="fa-solid fa-sun text-xl"></i>日间模式
                 </button>
-                <button class="flex-1 py-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 text-sm"
+                <button class="flex-1 py-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2 text-sm"
                   :class="darkMode?'border-primary-500 bg-primary-900 text-primary-300':'border-slate-200 hover:border-slate-300'"
                   @click="darkMode=true;saveDarkMode()">
                   <i class="fa-solid fa-moon text-xl"></i>夜间模式
@@ -949,10 +1021,17 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                   <label class="block text-xs font-medium text-slate-500 mb-1">模型名称</label>
                   <input class="input" x-model="settingsForm.model" placeholder="如 claude-opus-4-5-20250929"/>
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-slate-500 mb-1">智能体最大迭代次数</label>
-                  <input class="input" type="number" min="1" max="5000" x-model="settingsForm.max_iterations" placeholder="100"/>
-                  <p class="text-xs text-slate-400 mt-1">每次运行最多调用工具的轮次，默认 100</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Max Tokens（输出上限）</label>
+                    <input class="input" type="number" min="1024" max="65536" x-model="settingsForm.max_tokens" placeholder="16384"/>
+                    <p class="text-xs text-slate-400 mt-1">模型单次回复最大 token 数，太小会导致输出被截断</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">最大迭代次数</label>
+                    <input class="input" type="number" min="1" max="5000" x-model="settingsForm.max_iterations" placeholder="100"/>
+                    <p class="text-xs text-slate-400 mt-1">每次运行最多调用工具的轮次</p>
+                  </div>
                 </div>
                 <div x-show="settingsForm.provider!=='anthropic'">
                   <label class="block text-xs font-medium text-slate-500 mb-1">Base URL</label>
@@ -997,10 +1076,29 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                       :class="settingsForm.context_compress_enabled?'translate-x-6':'translate-x-1'"></span>
                   </button>
                 </div>
-                <div x-show="settingsForm.context_compress_enabled">
-                  <label class="block text-xs font-medium text-slate-500 mb-1">每隔多少轮压缩一次</label>
-                  <input class="input" type="number" min="5" max="200" x-model="settingsForm.context_compress_every_n" placeholder="30"/>
-                  <p class="text-xs text-slate-400 mt-1">建议 20-50，压缩会额外消耗一次 API 调用</p>
+                <div x-show="settingsForm.context_compress_enabled" class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">每隔多少轮压缩一次</label>
+                    <input class="input" type="number" min="5" max="200" x-model="settingsForm.context_compress_every_n" placeholder="30"/>
+                    <p class="text-xs text-slate-400 mt-1">建议 20-50</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">压缩保留消息数</label>
+                    <input class="input" type="number" min="4" max="50" x-model="settingsForm.compress_keep_messages" placeholder="10"/>
+                    <p class="text-xs text-slate-400 mt-1">压缩时保留最近 N 条不压缩</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Artifact 每页字符数</label>
+                    <input class="input" type="number" min="1000" max="20000" x-model="settingsForm.artifact_page_size" placeholder="3000"/>
+                    <p class="text-xs text-slate-400 mt-1">大结果分页展示的页大小</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">过短回复保护阈值</label>
+                    <input class="input" type="number" min="0" max="200" x-model="settingsForm.short_content_threshold" placeholder="10"/>
+                    <p class="text-xs text-slate-400 mt-1">回复短于此字符数时自动续跑，0 关闭</p>
+                  </div>
                 </div>
                 <button class="btn btn-primary w-full" @click="saveSettings()">
                   <i class="fa-solid fa-floppy-disk mr-2"></i>保存上下文配置
@@ -1044,6 +1142,20 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     <p class="text-xs text-slate-400 mt-1">高于该占比会触发临时冷却</p>
                   </div>
                 </div>
+                <!-- LLM 请求容错 -->
+                <h4 class="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-3">LLM 请求容错</h4>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">请求超时（秒）</label>
+                    <input class="input" type="number" min="30" max="600" x-model="settingsForm.llm_request_timeout_sec" placeholder="180"/>
+                    <p class="text-xs text-slate-400 mt-1">单次 LLM 请求最大等待时间</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">重试次数</label>
+                    <input class="input" type="number" min="0" max="10" x-model="settingsForm.llm_request_retry" placeholder="2"/>
+                    <p class="text-xs text-slate-400 mt-1">请求失败时最多重试次数</p>
+                  </div>
+                </div>
                 <button class="btn btn-primary w-full" @click="saveSettings()">
                   <i class="fa-solid fa-floppy-disk mr-2"></i>保存策略配置
                 </button>
@@ -1057,9 +1169,9 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
 
     <!-- ═══ RIGHT SIDE PANEL ══════════════════════════════ -->
     <div class="flex-shrink-0 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden transition-all duration-300 flex flex-col"
-         :class="rightPanel ? 'w-[460px]' : 'w-0'">
+         :class="rightPanel ? (widePanel ? 'w-[680px]' : 'w-[460px]') : 'w-0'">
 
-      <div class="w-[460px] flex flex-col h-full" x-show="rightPanel" x-cloak>
+      <div class="flex flex-col h-full" :class="widePanel ? 'w-[680px]' : 'w-[460px]'" x-show="rightPanel" x-cloak>
 
         <!-- Panel header -->
         <div class="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
@@ -1069,7 +1181,7 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
             </div>
             <h2 class="font-bold text-base" x-text="panelTitle"></h2>
           </div>
-          <button @click="closePanel()" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition">
+          <button @click="closePanel()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -1115,6 +1227,22 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
                     <option :value="a.id" x-text="a.name+' ('+a.mode+')'"></option>
                   </template>
                 </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">技能指引 (Skill)</label>
+                <div class="border border-slate-200 dark:border-slate-600 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                  <template x-for="s in skills" :key="s.id">
+                    <label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer text-sm">
+                      <input type="checkbox" class="accent-primary-600"
+                             :value="s.id"
+                             :checked="JSON.parse(projectForm.skills_json||'[]').includes(s.id)"
+                             @change="let ids=JSON.parse(projectForm.skills_json||'[]');if($el.checked){ids.push(s.id)}else{ids=ids.filter(i=>i!==s.id)};projectForm.skills_json=JSON.stringify(ids)"/>
+                      <span x-text="s.name" class="font-medium"></span>
+                      <span class="text-slate-400 text-xs truncate max-w-[160px]" x-text="s.description"></span>
+                    </label>
+                  </template>
+                  <p x-show="skills.length===0" class="text-xs text-slate-400 py-2 text-center">暂无 Skill，请先在“Skill 管理”中创建</p>
+                </div>
               </div>
             </div>
           </template>
@@ -1189,65 +1317,79 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           <!-- Vuln Form -->
           <template x-if="rightPanel==='vulnForm'">
             <div class="space-y-4">
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs font-medium text-slate-500 mb-1.5">所属项目</label>
-                  <select class="input" x-model="vulnForm.project_id">
+                  <select class="input form-input-elevated" x-model="vulnForm.project_id">
                     <option value="">选择项目</option>
                     <template x-for="p in projects" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
                   </select>
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-slate-500 mb-1.5">严重程度</label>
-                  <select class="input" x-model="vulnForm.severity">
+                  <select class="input form-input-elevated" x-model="vulnForm.severity">
                     <option>critical</option><option>high</option><option>medium</option><option>low</option><option>info</option>
                   </select>
                 </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1.5">类型</label>
+                  <input class="input form-input-elevated" x-model="vulnForm.vuln_type" placeholder="XSS / SQLi"/>
+                </div>
               </div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">标题</label><input class="input" x-model="vulnForm.title" placeholder="漏洞标题"/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">类型</label><input class="input" x-model="vulnForm.vuln_type" placeholder="XSS / SQLi / SSRF ..."/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">目标</label><input class="input" x-model="vulnForm.target" placeholder="受影响 URL"/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input h-24" x-model="vulnForm.description"></textarea></div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">标题</label><input class="input form-input-elevated" x-model="vulnForm.title" placeholder="漏洞标题"/></div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">目标</label><input class="input form-input-elevated" x-model="vulnForm.target" placeholder="受影响 URL"/></div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input form-input-elevated" style="min-height:120px;resize:vertical" x-model="vulnForm.description" placeholder="漏洞详细描述..."></textarea></div>
             </div>
           </template>
 
           <!-- MCP Form -->
           <template x-if="rightPanel==='mcpForm'">
             <div class="space-y-4">
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">名称 <span class="text-red-400">*</span></label><input class="input" x-model="mcpForm.name"/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input h-20" x-model="mcpForm.description"></textarea></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">启动命令</label><input class="input font-mono text-xs" x-model="mcpForm.command" placeholder="python -m my_mcp_server"/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">参数 (JSON 数组)</label><input class="input font-mono text-xs" x-model="mcpForm.args_json" placeholder='["--port","8080"]'/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">环境变量 (JSON 对象)</label><textarea class="input code h-24" x-model="mcpForm.env_json" placeholder='{"API_KEY":"xxx"}'></textarea></div>
-              <div class="flex items-center gap-3">
-                <label class="text-sm">默认启用</label>
-                <button type="button" @click="mcpForm.enabled=!mcpForm.enabled"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
-                  :class="mcpForm.enabled ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'">
-                  <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                    :class="mcpForm.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
-                </button>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-xs font-medium text-slate-500 mb-1.5">名称 <span class="text-red-400">*</span></label><input class="input form-input-elevated" x-model="mcpForm.name"/></div>
+                <div class="flex items-end pb-0.5">
+                  <div class="flex items-center gap-3">
+                    <label class="text-sm">默认启用</label>
+                    <button type="button" @click="mcpForm.enabled=!mcpForm.enabled"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                      :class="mcpForm.enabled ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'">
+                      <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        :class="mcpForm.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                    </button>
+                  </div>
+                </div>
               </div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input form-input-elevated" style="min-height:56px;resize:vertical" x-model="mcpForm.description"></textarea></div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">启动命令</label><input class="input form-input-elevated font-mono text-xs" x-model="mcpForm.command" placeholder="python -m my_mcp_server"/></div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">参数 (JSON 数组)</label><input class="input form-input-elevated font-mono text-xs" x-model="mcpForm.args_json" placeholder='["--port","8080"]'/></div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">环境变量 (JSON 对象)</label><textarea class="input code form-input-elevated" style="min-height:96px;resize:vertical" x-model="mcpForm.env_json" placeholder='{"API_KEY":"xxx"}'></textarea></div>
             </div>
           </template>
 
           <!-- Tool Form -->
           <template x-if="rightPanel==='toolForm'">
             <div class="space-y-4">
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">工具名称 <span class="text-red-400">*</span></label><input class="input" x-model="toolForm.name" placeholder="my_tool"/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input h-16" x-model="toolForm.description"></textarea></div>
-              <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">Python 代码</label>
-                <textarea class="input code h-72" x-model="toolForm.code" placeholder="@anthropic.beta_tool&#10;def my_tool(param: str) -> str:&#10;    '''工具描述'''&#10;    return ..."></textarea>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-xs font-medium text-slate-500 mb-1.5">工具名称 <span class="text-red-400">*</span></label><input class="input form-input-elevated" x-model="toolForm.name" placeholder="my_tool"/></div>
+                <div class="flex items-end pb-0.5">
+                  <div class="flex items-center gap-3">
+                    <label class="text-sm">启用</label>
+                    <button type="button" @click="toolForm.enabled=!toolForm.enabled"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
+                      :class="toolForm.enabled ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'">
+                      <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        :class="toolForm.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <label class="text-sm">启用</label>
-                <button type="button" @click="toolForm.enabled=!toolForm.enabled"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
-                  :class="toolForm.enabled ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'">
-                  <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                    :class="toolForm.enabled ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
-                </button>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input form-input-elevated" style="min-height:56px;resize:vertical" x-model="toolForm.description"></textarea></div>
+              <div class="flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-xs font-medium text-slate-500">Python 代码</label>
+                  <span class="text-[10px] text-slate-400" x-text="(toolForm.code||'').length+' 字符'"></span>
+                </div>
+                <textarea class="input code form-input-elevated flex-1" style="min-height:320px;resize:vertical;line-height:1.6" x-model="toolForm.code" placeholder="def my_tool(param: str) -> str:&#10;    '''工具描述'''&#10;    return ..."></textarea>
               </div>
             </div>
           </template>
@@ -1256,15 +1398,57 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           <template x-if="rightPanel==='agentForm'">
             <div class="space-y-4">
               <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-xs font-medium text-slate-500 mb-1.5">名称 <span class="text-red-400">*</span></label><input class="input" x-model="agentForm.name"/></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1.5">名称 <span class="text-red-400">*</span></label><input class="input form-input-elevated" x-model="agentForm.name"/></div>
                 <div><label class="block text-xs font-medium text-slate-500 mb-1.5">模式</label>
-                  <select class="input" x-model="agentForm.mode"><option value="single">单智能体</option><option value="multi">多智能体</option></select>
+                  <select class="input form-input-elevated" x-model="agentForm.mode"><option value="single">单智能体</option><option value="multi">多智能体</option></select>
                 </div>
               </div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input h-16" x-model="agentForm.description"></textarea></div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input form-input-elevated" style="min-height:56px;resize:vertical" x-model="agentForm.description"></textarea></div>
+              <div class="flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-xs font-medium text-slate-500">系统提示词</label>
+                  <span class="text-[10px] text-slate-400" x-text="(agentForm.system_prompt||'').length+' 字符'"></span>
+                </div>
+                <textarea class="input code form-input-elevated flex-1" style="min-height:300px;resize:vertical;line-height:1.6" x-model="agentForm.system_prompt" placeholder="你是一个专业的安全测试智能体..."></textarea>
+              </div>
+              <!-- Sub-agent selector (multi mode only) -->
+              <template x-if="agentForm.mode==='multi'">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1.5">子智能体</label>
+                  <div class="border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                    <template x-for="a in agents.filter(x=> !editItem || x.id !== editItem.id)" :key="a.id">
+                      <label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer text-sm">
+                        <input type="checkbox" class="accent-primary-600"
+                               :value="a.id"
+                               :checked="JSON.parse(agentForm.sub_agents_json||'[]').includes(a.id)"
+                               @change="let ids=JSON.parse(agentForm.sub_agents_json||'[]');if($el.checked){ids.push(a.id)}else{ids=ids.filter(i=>i!==a.id)};agentForm.sub_agents_json=JSON.stringify(ids)"/>
+                        <span x-text="a.name" class="font-medium"></span>
+                        <span class="text-slate-400 text-xs" x-text="a.mode==='multi'?'(编排)':'(单体)'"></span>
+                      </label>
+                    </template>
+                    <p x-show="agents.filter(x=> !editItem || x.id !== editItem.id).length===0" class="text-xs text-slate-400 py-2 text-center">暂无可选的子智能体</p>
+                  </div>
+                </div>
+              </template>
+              <!-- Tool selector -->
               <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">系统提示词</label>
-                <textarea class="input code h-72" x-model="agentForm.system_prompt" placeholder="你是一个..."></textarea>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">工具选择 <span class="text-[10px] text-slate-400" x-text="'已选 '+JSON.parse(agentForm.tools_json||'[]').length+'/'+tools.length"></span></label>
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-3 max-h-56 overflow-y-auto space-y-1">
+                  <template x-for="t in tools" :key="t.name">
+                    <label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm">
+                      <input type="checkbox" class="accent-primary-600"
+                             :value="t.name"
+                             :checked="JSON.parse(agentForm.tools_json||'[]').includes(t.name)"
+                             @change="let ns=JSON.parse(agentForm.tools_json||'[]');if($el.checked){ns.push(t.name)}else{ns=ns.filter(n=>n!==t.name)};agentForm.tools_json=JSON.stringify(ns)"/>
+                      <span x-text="t.name" class="font-medium"></span>
+                      <span class="px-1.5 py-0.5 text-[9px] rounded-full font-bold"
+                        :class="t.source==='builtin'?'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400':t.source==='mcp'?'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400':'bg-green-100 text-green-600'"
+                        x-text="t.source==='builtin'?'内置':t.source==='mcp'?'MCP':'自定义'"></span>
+                      <span class="text-slate-400 text-xs truncate max-w-36" x-text="t.description?.split('\n')[0]||''"></span>
+                    </label>
+                  </template>
+                  <p x-show="tools.length===0" class="text-xs text-slate-400 py-2 text-center">暂无可选工具</p>
+                </div>
               </div>
             </div>
           </template>
@@ -1272,12 +1456,40 @@ textarea.code{font-family:'Courier New',monospace;font-size:12px;}
           <!-- Skill Form -->
           <template x-if="rightPanel==='skillForm'">
             <div class="space-y-4">
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">名称 <span class="text-red-400">*</span></label><input class="input" x-model="skillForm.name"/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">标签（逗号分隔）</label><input class="input" x-model="skillTagsRaw" placeholder="web, xss, recon"/></div>
-              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input h-16" x-model="skillForm.description"></textarea></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-xs font-medium text-slate-500 mb-1.5">名称 <span class="text-red-400">*</span></label><input class="input form-input-elevated" x-model="skillForm.name" placeholder="漏洞上报规范"/></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1.5">标签（逗号分隔）</label><input class="input form-input-elevated" x-model="skillTagsRaw" placeholder="web, xss, recon"/></div>
+              </div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">描述</label><textarea class="input form-input-elevated" style="min-height:56px;resize:vertical" x-model="skillForm.description" placeholder="简要说明此 Skill 的用途"></textarea></div>
+              <div class="flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-xs font-medium text-slate-500">内容 (Markdown)</label>
+                  <span class="text-[10px] text-slate-400" x-text="(skillForm.content||'').length+' 字符'"></span>
+                </div>
+                <textarea class="input code form-input-elevated flex-1" style="min-height:360px;resize:vertical;line-height:1.6" x-model="skillForm.content" placeholder="## 指导规则&#10;&#10;在这里编写 Skill 的完整内容，支持 Markdown 格式..."></textarea>
+              </div>
+            </div>
+          </template>
+
+          <!-- Memory Form -->
+          <template x-if="rightPanel==='memoryForm'">
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1.5">项目 <span class="text-red-400">*</span></label>
+                  <select class="input form-input-elevated" x-model="memoryForm.project_id" :disabled="!!editItem">
+                    <option value="">选择项目</option>
+                    <template x-for="p in projects" :key="p.id">
+                      <option :value="p.id" x-text="p.name"></option>
+                    </template>
+                  </select>
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1.5">来源</label><input class="input form-input-elevated" x-model="memoryForm.source" placeholder="ReconAgent-run, 手动添加"/></div>
+              </div>
+              <div><label class="block text-xs font-medium text-slate-500 mb-1.5">Key <span class="text-red-400">*</span></label><input class="input form-input-elevated font-mono" x-model="memoryForm.key" placeholder="open_ports, discovered_subdomains, waf_info"/></div>
               <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">内容 (Markdown)</label>
-                <textarea class="input h-72" x-model="skillForm.content" placeholder="## Skill 内容&#10;..."></textarea>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">Value</label>
+                <textarea class="input code form-input-elevated" style="min-height:200px;resize:vertical" x-model="memoryForm.value" placeholder="记忆内容（纯文本或 JSON）"></textarea>
               </div>
             </div>
           </template>
@@ -1338,9 +1550,11 @@ function app() {
       {id:'tools',    label:'Tool 管理',icon:'fa-solid fa-wrench'},
       {id:'agents',   label:'智能体',   icon:'fa-solid fa-robot'},
       {id:'skills',   label:'Skill',    icon:'fa-solid fa-bolt'},
+      {id:'memories', label:'记忆管理', icon:'fa-solid fa-brain'},
     ],
 
-    projects:[], vulns:[], mcps:[], tools:[], agents:[], skills:[], files:[], vulnCount:0,
+    projects:[], vulns:[], mcps:[], tools:[], agents:[], skills:[], files:[], memories:[], vulnCount:0,
+    memoryFilterProject:'', memoryForm:{project_id:'',key:'',value:'',source:''},
     currentProject:null, projectVulns:[], selectedVuln:null, vulnTab:'描述', reviewNote:'',
     liveEntries:[], liveExpanded:true, runTask:'', wsConn:null,
     historyLogs:[], historyExpanded:{},
@@ -1351,20 +1565,20 @@ function app() {
     mcpTestResults:{}, toolTestResults:{},
     filePreview:null, fileUploadProjectId:'', fileFilterProject:'',
     vulnFilter:{severity:'',status:'',sort:'severity_desc'},
-    search:{projects:'',projectVulns:'',vulns:'',mcps:'',tools:'',agents:'',skills:'',files:''},
-    searchApplied:{projects:'',projectVulns:'',vulns:'',mcps:'',tools:'',agents:'',skills:'',files:''},
-    selected:{projects:[],vulns:[],mcps:[],tools:[],agents:[],skills:[],files:[]},
-    showSelectors:{projects:false,vulns:false,mcps:false,tools:false,agents:false,skills:false,files:false},
+    search:{projects:'',projectVulns:'',vulns:'',mcps:'',tools:'',agents:'',skills:'',files:'',memories:''},
+    searchApplied:{projects:'',projectVulns:'',vulns:'',mcps:'',tools:'',agents:'',skills:'',files:'',memories:''},
+    selected:{projects:[],vulns:[],mcps:[],tools:[],agents:[],skills:[],files:[],memories:[]},
+    showSelectors:{projects:false,vulns:false,mcps:false,tools:false,agents:false,skills:false,files:false,memories:false},
     batchSeverity:'',
 
-    projectForm:{name:'',target:'',description:'',mode:'single',agent_id:''},
+    projectForm:{name:'',target:'',description:'',mode:'single',agent_id:'',skills_json:'[]'},
     vulnForm:{project_id:'',title:'',description:'',severity:'medium',vuln_type:'',target:'',poc:'',request_raw:'',response_raw:'',impact:'',recommendation:''},
     mcpForm:{name:'',description:'',command:'',args_json:'[]',env_json:'{}',enabled:true},
     toolForm:{name:'',description:'',code:'',enabled:true},
-    agentForm:{name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]'},
+    agentForm:{name:'',description:'',mode:'single',system_prompt:'',tools_json:'[]',mcps_json:'[]',sub_agents_json:'[]'},
     skillForm:{name:'',description:'',content:'',tags_json:'[]'},
     skillTagsRaw:'',
-    settingsForm:{provider:'anthropic',model:'',api_key:'',base_url:'',max_iterations:'100',tool_result_max_chars:'8000',page_source_max_chars:'5000',context_compress_enabled:false,context_compress_every_n:'30',strategy_guard_enabled:true,strategy_repeat_call_limit:'5',strategy_no_progress_limit:'12',strategy_browser_cooldown_rounds:'6',strategy_browser_ratio_limit_pct:'80'},
+    settingsForm:{provider:'anthropic',model:'',api_key:'',base_url:'',max_tokens:'16384',max_iterations:'100',tool_result_max_chars:'8000',page_source_max_chars:'5000',context_compress_enabled:false,context_compress_every_n:'30',compress_keep_messages:'10',artifact_page_size:'3000',short_content_threshold:'10',strategy_guard_enabled:true,strategy_repeat_call_limit:'5',strategy_no_progress_limit:'12',strategy_browser_cooldown_rounds:'6',strategy_browser_ratio_limit_pct:'80',llm_request_timeout_sec:'180',llm_request_retry:'2'},
     showKey:false,
 
     get panelTitle() {
@@ -1376,6 +1590,7 @@ function app() {
         toolForm:    this.editItem ? '编辑 Tool' : '新增 Tool',
         agentForm:   this.editItem ? '编辑智能体' : '新增智能体',
         skillForm:   this.editItem ? '编辑 Skill' : '新增 Skill',
+        memoryForm:  this.editItem ? '编辑记忆' : '新增记忆',
       }[this.rightPanel] || ''
     },
     get panelIcon() {
@@ -1387,6 +1602,7 @@ function app() {
         toolForm:   'fa-solid fa-wrench text-green-600',
         agentForm:  'fa-solid fa-robot text-primary-600',
         skillForm:  'fa-solid fa-bolt text-amber-500',
+        memoryForm: 'fa-solid fa-brain text-teal-500',
       }[this.rightPanel] || 'fa-solid fa-pencil text-slate-400'
     },
     get panelIconBg() {
@@ -1397,14 +1613,15 @@ function app() {
         mcpForm:    'bg-indigo-100',
         toolForm:   'bg-green-100',
         agentForm:  'bg-primary-100',
+        memoryForm: 'bg-teal-100',
         skillForm:  'bg-amber-100',
       }[this.rightPanel] || 'bg-slate-100'
     },
     get currentTitle() {
-      return {projects:'项目',vulns:'漏洞',files:'文件管理',mcps:'MCP 管理',tools:'Tool 管理',agents:'智能体管理',skills:'Skill 管理',settings:'系统设置','project-detail':this.currentProject?.name||'项目详情'}[this.page]||''
+      return {projects:'项目',vulns:'漏洞',files:'文件管理',mcps:'MCP 管理',tools:'Tool 管理',agents:'智能体管理',skills:'Skill 管理',memories:'记忆管理',settings:'系统设置','project-detail':this.currentProject?.name||'项目详情'}[this.page]||''
     },
     get currentSubtitle() {
-      return {projects:'管理渗透测试项目',vulns:'漏洞审核与管理',files:'项目文件与证据管理',mcps:'MCP 服务器配置',tools:'工具函数管理',agents:'智能体配置与提示词',skills:'技能库管理',settings:'平台配置','project-detail':'项目详情与任务运行'}[this.page]||''
+      return {projects:'管理渗透测试项目',vulns:'漏洞审核与管理',files:'项目文件与证据管理',mcps:'MCP 服务器配置',tools:'工具函数管理',agents:'智能体配置与提示词',skills:'技能库管理',memories:'查看与管理项目记忆条目',settings:'平台配置','project-detail':'项目详情与任务运行'}[this.page]||''
     },
     get filteredProjects() {
       return this.filterCollection(this.projects, this.searchApplied.projects, ['name','target','description','status'])
@@ -1431,7 +1648,7 @@ function app() {
       return this.filterCollection(this.mcps, this.searchApplied.mcps, ['name','description','command'])
     },
     get filteredTools() {
-      return this.filterCollection(this.tools, this.searchApplied.tools, ['name','description','code'])
+      return this.filterCollection(this.tools, this.searchApplied.tools, ['name','description','source'])
     },
     get filteredAgents() {
       return this.filterCollection(this.agents, this.searchApplied.agents, ['name','description','mode','system_prompt'])
@@ -1442,19 +1659,25 @@ function app() {
     get filteredFiles() {
       return this.filterCollection(this.files, this.searchApplied.files, ['name','project_name','source','mime_type'])
     },
+    get filteredMemories() {
+      let items = this.filterCollection(this.memories, this.searchApplied.memories, ['key','value','source','project_name'])
+      if(this.memoryFilterProject) items = items.filter(m=>String(m.project_id)===String(this.memoryFilterProject))
+      return items
+    },
 
     async init() {
       if (this.darkMode) document.documentElement.classList.add('dark')
       await Promise.all([this.loadProjects(),this.loadVulns(),this.loadMCPs(),this.loadTools(),this.loadAgents(),this.loadSkills(),this.loadSettings(),this.loadFiles()])
     },
 
-    navigate(p) { this.page=p; this.closePanel(); if(p==='vulns') this.loadVulns(); if(p==='files') this.loadFiles(this.fileFilterProject||null) },
+    navigate(p) { this.page=p; this.closePanel(); if(p==='vulns') this.loadVulns(); if(p==='files') this.loadFiles(this.fileFilterProject||null); if(p==='memories') this.loadMemories() },
     saveDarkMode() { localStorage.setItem('darkMode',this.darkMode); document.documentElement.classList.toggle('dark',this.darkMode) },
+    get widePanel(){ return ['skillForm','agentForm','toolForm','vulnDetail','vulnForm'].includes(this.rightPanel) },
     openPanel(type) { this.rightPanel=type },
     closePanel() { this.rightPanel=null; this.editItem=null },
 
     async panelSave() {
-      const map={projectForm:()=>this.saveProject(),vulnForm:()=>this.saveVuln(),mcpForm:()=>this.saveMCP(),toolForm:()=>this.saveTool(),agentForm:()=>this.saveAgent(),skillForm:()=>this.saveSkill()}
+      const map={projectForm:()=>this.saveProject(),vulnForm:()=>this.saveVuln(),mcpForm:()=>this.saveMCP(),toolForm:()=>this.saveTool(),agentForm:()=>this.saveAgent(),skillForm:()=>this.saveSkill(),memoryForm:()=>this.saveMemory()}
       if(map[this.rightPanel]) await map[this.rightPanel]()
     },
 
@@ -1588,7 +1811,7 @@ function app() {
       this.toast('已删除全部运行记录')
     },
     async saveProject(){try{if(this.editItem)await this.api('PATCH',`/api/projects/${this.editItem.id}`,this.projectForm);else await this.api('POST','/api/projects/',{...this.projectForm,agent_id:this.projectForm.agent_id||null});await this.loadProjects();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
-    editProject(p){this.editItem=p;this.projectForm={name:p.name,target:p.target,description:p.description,mode:p.mode,agent_id:p.agent_id||''};this.openPanel('projectForm')},
+    editProject(p){this.editItem=p;this.projectForm={name:p.name,target:p.target,description:p.description,mode:p.mode,agent_id:p.agent_id||'',skills_json:p.skills_json||'[]'};this.openPanel('projectForm')},
     async deleteProject(id){
       if(!confirm('确认删除？'))return
       await this.api('DELETE',`/api/projects/${id}`)
@@ -1739,8 +1962,7 @@ function app() {
     },
 
     async loadTools(){
-      this.tools=await this.api('GET','/api/tools/')
-      this.pruneSelection('tools', this.tools)
+      this.tools=await this.api('GET','/api/tools/all')
     },
     async saveTool(){try{if(this.editItem)await this.api('PATCH',`/api/tools/${this.editItem.id}`,this.toolForm);else await this.api('POST','/api/tools/',this.toolForm);await this.loadTools();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
     editTool(t){this.editItem=t;this.toolForm={name:t.name,description:t.description,code:t.code,enabled:t.enabled};this.openPanel('toolForm')},
@@ -1778,7 +2000,7 @@ function app() {
       this.pruneSelection('agents', this.agents)
     },
     async saveAgent(){try{if(this.editItem)await this.api('PATCH',`/api/agents/${this.editItem.id}`,this.agentForm);else await this.api('POST','/api/agents/',this.agentForm);await this.loadAgents();this.closePanel();this.toast('保存成功')}catch(e){this.toast(e.message,'error')}},
-    editAgent(a){this.editItem=a;this.agentForm={name:a.name,description:a.description,mode:a.mode,system_prompt:a.system_prompt,tools_json:a.tools_json,mcps_json:a.mcps_json};this.openPanel('agentForm')},
+    editAgent(a){this.editItem=a;this.agentForm={name:a.name,description:a.description,mode:a.mode,system_prompt:a.system_prompt,tools_json:a.tools_json,mcps_json:a.mcps_json,sub_agents_json:a.sub_agents_json||'[]'};this.openPanel('agentForm')},
     async deleteAgent(id){
       if(!confirm('确认删除？'))return
       await this.api('DELETE',`/api/agents/${id}`)
@@ -1804,8 +2026,36 @@ function app() {
     async batchDeleteSkills(){await this.batchDelete('skills', this.selected.skills, id=>this.api('DELETE',`/api/skills/${id}`), ()=>this.loadSkills())},
     async batchDeleteFiles(){await this.batchDelete('files', this.selected.files, id=>this.api('DELETE',`/api/files/${id}`), ()=>this.loadFiles(this.fileFilterProject||null))},
 
-    async loadSettings(){const s=await this.api('GET','/api/settings/');this.settingsForm={provider:s.provider||'anthropic',model:s.model||'',api_key:'',base_url:s.base_url||'',max_iterations:s.max_iterations||'100',tool_result_max_chars:s.tool_result_max_chars||'8000',page_source_max_chars:s.page_source_max_chars||'5000',context_compress_enabled:(s.context_compress_enabled||'false')==='true',context_compress_every_n:s.context_compress_every_n||'30',strategy_guard_enabled:(s.strategy_guard_enabled||'true')==='true',strategy_repeat_call_limit:s.strategy_repeat_call_limit||'5',strategy_no_progress_limit:s.strategy_no_progress_limit||'12',strategy_browser_cooldown_rounds:s.strategy_browser_cooldown_rounds||'6',strategy_browser_ratio_limit_pct:s.strategy_browser_ratio_limit_pct||'80'};if(s.theme==='dark'){this.darkMode=true;document.documentElement.classList.add('dark')}},
-    async saveSettings(){try{await this.api('PATCH','/api/settings/',{provider:this.settingsForm.provider,model:this.settingsForm.model,base_url:this.settingsForm.base_url,theme:this.darkMode?'dark':'light',max_iterations:String(this.settingsForm.max_iterations||100),tool_result_max_chars:String(this.settingsForm.tool_result_max_chars||8000),page_source_max_chars:String(this.settingsForm.page_source_max_chars||5000),context_compress_enabled:this.settingsForm.context_compress_enabled?'true':'false',context_compress_every_n:String(this.settingsForm.context_compress_every_n||30),strategy_guard_enabled:this.settingsForm.strategy_guard_enabled?'true':'false',strategy_repeat_call_limit:String(this.settingsForm.strategy_repeat_call_limit||5),strategy_no_progress_limit:String(this.settingsForm.strategy_no_progress_limit||12),strategy_browser_cooldown_rounds:String(this.settingsForm.strategy_browser_cooldown_rounds||6),strategy_browser_ratio_limit_pct:String(this.settingsForm.strategy_browser_ratio_limit_pct||80)});if(this.settingsForm.api_key){await fetch(`/api/settings/api-key?api_key=${encodeURIComponent(this.settingsForm.api_key)}`,{method:'POST'});this.settingsForm.api_key=''}this.toast('设置已保存')}catch(e){this.toast(e.message,'error')}},
+    // ── Memories ──────────────────────────────────────────────────────────────
+    async loadMemories(){
+      const raw=await this.api('GET','/api/memories/')
+      const projMap=Object.fromEntries(this.projects.map(p=>[p.id,p.name]))
+      this.memories=raw.map(m=>({...m,project_name:projMap[m.project_id]||''}))
+      this.pruneSelection('memories', this.memories)
+    },
+    async saveMemory(){
+      try{
+        if(this.editItem){
+          await this.api('PATCH',`/api/memories/${this.editItem.id}`,{key:this.memoryForm.key,value:this.memoryForm.value,source:this.memoryForm.source})
+        }else{
+          if(!this.memoryForm.project_id){this.toast('请选择项目','error');return}
+          await this.api('POST','/api/memories/',{project_id:Number(this.memoryForm.project_id),key:this.memoryForm.key,value:this.memoryForm.value,source:this.memoryForm.source||'手动添加'})
+        }
+        await this.loadMemories();this.closePanel();this.toast('保存成功')
+      }catch(e){this.toast(e.message,'error')}
+    },
+    editMemory(m){this.editItem=m;this.memoryForm={project_id:m.project_id,key:m.key,value:m.value,source:m.source};this.openPanel('memoryForm')},
+    async deleteMemory(id){
+      if(!confirm('确认删除此记忆条目？'))return
+      await this.api('DELETE',`/api/memories/${id}`)
+      this.removeFromSelection('memories', id)
+      await this.loadMemories()
+      this.toast('已删除')
+    },
+    async batchDeleteMemories(){await this.batchDelete('memories', this.selected.memories, id=>this.api('DELETE',`/api/memories/${id}`), ()=>this.loadMemories())},
+
+    async loadSettings(){const s=await this.api('GET','/api/settings/');this.settingsForm={provider:s.provider||'anthropic',model:s.model||'',api_key:'',base_url:s.base_url||'',max_tokens:s.max_tokens||'16384',max_iterations:s.max_iterations||'100',tool_result_max_chars:s.tool_result_max_chars||'8000',page_source_max_chars:s.page_source_max_chars||'5000',context_compress_enabled:(s.context_compress_enabled||'false')==='true',context_compress_every_n:s.context_compress_every_n||'30',compress_keep_messages:s.compress_keep_messages||'10',artifact_page_size:s.artifact_page_size||'3000',short_content_threshold:s.short_content_threshold||'10',strategy_guard_enabled:(s.strategy_guard_enabled||'true')==='true',strategy_repeat_call_limit:s.strategy_repeat_call_limit||'5',strategy_no_progress_limit:s.strategy_no_progress_limit||'12',strategy_browser_cooldown_rounds:s.strategy_browser_cooldown_rounds||'6',strategy_browser_ratio_limit_pct:s.strategy_browser_ratio_limit_pct||'80',llm_request_timeout_sec:s.llm_request_timeout_sec||'180',llm_request_retry:s.llm_request_retry||'2'};if(s.theme==='dark'){this.darkMode=true;document.documentElement.classList.add('dark')}},
+    async saveSettings(){try{await this.api('PATCH','/api/settings/',{provider:this.settingsForm.provider,model:this.settingsForm.model,base_url:this.settingsForm.base_url,theme:this.darkMode?'dark':'light',max_tokens:String(this.settingsForm.max_tokens||16384),max_iterations:String(this.settingsForm.max_iterations||100),tool_result_max_chars:String(this.settingsForm.tool_result_max_chars||8000),page_source_max_chars:String(this.settingsForm.page_source_max_chars||5000),context_compress_enabled:this.settingsForm.context_compress_enabled?'true':'false',context_compress_every_n:String(this.settingsForm.context_compress_every_n||30),compress_keep_messages:String(this.settingsForm.compress_keep_messages||10),artifact_page_size:String(this.settingsForm.artifact_page_size||3000),short_content_threshold:String(this.settingsForm.short_content_threshold||10),strategy_guard_enabled:this.settingsForm.strategy_guard_enabled?'true':'false',strategy_repeat_call_limit:String(this.settingsForm.strategy_repeat_call_limit||5),strategy_no_progress_limit:String(this.settingsForm.strategy_no_progress_limit||12),strategy_browser_cooldown_rounds:String(this.settingsForm.strategy_browser_cooldown_rounds||6),strategy_browser_ratio_limit_pct:String(this.settingsForm.strategy_browser_ratio_limit_pct||80),llm_request_timeout_sec:String(this.settingsForm.llm_request_timeout_sec||180),llm_request_retry:String(this.settingsForm.llm_request_retry||2)});if(this.settingsForm.api_key){await fetch(`/api/settings/api-key?api_key=${encodeURIComponent(this.settingsForm.api_key)}`,{method:'POST'});this.settingsForm.api_key=''}this.toast('设置已保存')}catch(e){this.toast(e.message,'error')}},
   }
 }
 </script>

@@ -87,6 +87,7 @@ SIGMA_SINGLE_AGENT_PROMPT = """你是sigmaAI，是一个专业的网络安全渗
 4. 如果工具执行失败但输出了有用信息，可以基于这些信息继续分析
 5. 如果确实无法使用某个工具，向用户说明问题，并建议替代方案或手动操作
 6. 不要因为单个工具失败就停止整个测试流程，尝试其他方法继续完成任务
+7. **严禁调用不存在的工具。** 以下工具名都是虚构的、不可用的，绝对不要调用：Bash、Agent、Delegate、SubAgent、WebFetch、Run、Shell、Execute、browser_get_intercepted_requests。如果你需要执行 shell 命令，使用 `exec_command`；如果你需要发 HTTP 请求，使用 `advanced_http_request`；如果你需要获取拦截到的浏览器请求，使用 `browser_get_requests`（不是 browser_get_intercepted_requests）。只使用工具列表中实际出现的工具名。
 
 当工具返回错误时，错误信息会包含在工具响应中，请仔细阅读并做出合理的决策。
 

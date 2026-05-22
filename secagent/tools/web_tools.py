@@ -85,6 +85,87 @@ def http_request(
 
 
 # ---------------------------------------------------------------------------
+# Advanced HTTP Request (full header/cookie/auth support)
+# ---------------------------------------------------------------------------
+
+@anthropic.beta_tool  # type: ignore[attr-defined]
+def advanced_http_request(
+    url: Annotated[str, "Full URL to request"],
+    method: Annotated[str, "HTTP method: GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD"] = "GET",
+    headers_json: Annotated[str, "HTTP headers as a JSON string, e.g. '{\"Authorization\":\"Bearer xxx\",\"Cookie\":\"sid=abc\"}'"] = "{}",
+    body: Annotated[str, "Request body (raw string). For JSON APIs pass the JSON string directly"] = "",
+    content_type: Annotated[str, "Content-Type header shortcut: 'json', 'form', 'xml', or full MIME type. Overridden if headers_json already contains Content-Type"] = "",
+    cookies: Annotated[str, "Cookies as 'key1=val1; key2=val2' string. Merged with any Cookie header in headers_json"] = "",
+    follow_redirects: Annotated[bool, "Follow HTTP redirects"] = True,
+    timeout: Annotated[int, "Request timeout in seconds"] = 15,
+    max_body_size: Annotated[int, "Max response body size to return (bytes)"] = 16384,
+) -> str:
+    """Send an HTTP request with full control over headers, cookies, and auth.
+
+    Use this tool when you need to:
+    - Send requests with Authorization / Bearer / Cookie headers
+    - Test authenticated endpoints
+    - Send custom Content-Type payloads (JSON, form-data, XML)
+    - Replay or tamper with captured requests
+
+    Returns status code, response headers, and body (capped at max_body_size).
+    **Do not use for brute-forcing or DoS.**
+    """
+    # Parse headers
+    parsed_headers: dict[str, str] = {}
+    if headers_json.strip():
+        try:
+            parsed_headers = json.loads(headers_json)
+        except json.JSONDecodeError:
+            return json.dumps({"error": f"Invalid headers_json: must be a valid JSON object, got: {headers_json[:200]}"})
+
+    # Content-Type shortcut
+    _ct_shortcuts = {
+        "json": "application/json",
+        "form": "application/x-www-form-urlencoded",
+        "xml": "application/xml",
+        "text": "text/plain",
+        "multipart": "multipart/form-data",
+    }
+    if content_type and not any(k.lower() == "content-type" for k in parsed_headers):
+        parsed_headers["Content-Type"] = _ct_shortcuts.get(content_type.lower(), content_type)
+
+    # Merge cookies
+    if cookies.strip():
+        existing_cookie = parsed_headers.get("Cookie", "")
+        if existing_cookie:
+            parsed_headers["Cookie"] = existing_cookie.rstrip("; ") + "; " + cookies.strip()
+        else:
+            parsed_headers["Cookie"] = cookies.strip()
+
+    try:
+        with httpx.Client(timeout=timeout, follow_redirects=follow_redirects, verify=False) as client:
+            resp = client.request(
+                method.upper(),
+                url,
+                headers=parsed_headers,
+                content=body.encode() if body else None,
+            )
+        body_text = resp.text[:max_body_size]
+        return json.dumps(
+            {
+                "url": str(resp.url),
+                "status_code": resp.status_code,
+                "method": method.upper(),
+                "request_headers": parsed_headers,
+                "response_headers": dict(resp.headers),
+                "body_preview": body_text,
+                "body_truncated": len(resp.text) > max_body_size,
+                "body_length": len(resp.text),
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return json.dumps({"error": str(exc)})
+
+
+# ---------------------------------------------------------------------------
 # WAF Detection
 # ---------------------------------------------------------------------------
 

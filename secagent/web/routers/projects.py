@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from secagent.web.database import get_db
-from secagent.web.models import Project, TaskLog, Vulnerability, ProjectFile
+from secagent.web.models import Project, TaskLog, Vulnerability, ProjectFile, ProjectMemory
 from secagent.web.schemas import ProjectCreate, ProjectOut, ProjectUpdate
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
@@ -55,6 +55,7 @@ def delete_project(pid: int, db: Session = Depends(get_db)):
     db.query(TaskLog).filter(TaskLog.project_id == pid).delete()
     db.query(Vulnerability).filter(Vulnerability.project_id == pid).delete()
     db.query(ProjectFile).filter(ProjectFile.project_id == pid).delete()
+    db.query(ProjectMemory).filter(ProjectMemory.project_id == pid).delete()
     db.delete(p)
     db.commit()
     return {"ok": True}
