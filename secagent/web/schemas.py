@@ -221,11 +221,15 @@ class SettingUpdate(BaseModel):
     api_key: Optional[str] = None
     base_url: Optional[str] = None
     max_iterations: Optional[str] = None
+    max_tokens: Optional[str] = None
     # Context management
     tool_result_max_chars: Optional[str] = None
     page_source_max_chars: Optional[str] = None
     context_compress_enabled: Optional[str] = None  # "true" / "false"
     context_compress_every_n: Optional[str] = None
+    compress_keep_messages: Optional[str] = None
+    artifact_page_size: Optional[str] = None
+    short_content_threshold: Optional[str] = None
     # Executor strategy guard
     strategy_guard_enabled: Optional[str] = None  # "true" / "false"
     strategy_repeat_call_limit: Optional[str] = None
